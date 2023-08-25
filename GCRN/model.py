@@ -55,26 +55,39 @@ class GCRN(nn.Module):
         self.num_edge_cat = num_edge_cat
         self.graph_embedding_size = graph_embedding_size
         self.embedding_size = embedding_size
-        self.Ws = []
         self.attention = attention
+        self.Ws = []
         for i in range(num_edge_cat):
             self.Ws.append(nn.Parameter(torch.Tensor(feature_size, graph_embedding_size)))
         self.Ws = nn.ParameterList(self.Ws)
         [glorot(W) for W in self.Ws]
+
+        self.Wv = []
+        for i in range(num_edge_cat):
+            self.Wv.append(nn.Parameter(torch.Tensor(feature_size, graph_embedding_size)))
+        self.Wv = nn.ParameterList(self.Wv)
+        [glorot(W) for W in self.Wv]
+
+        self.Wq = []
+        for i in range(num_edge_cat):
+            self.Wq.append(nn.Parameter(torch.Tensor(feature_size, graph_embedding_size)))
+        self.Wq = nn.ParameterList(self.Wq)
+        [glorot(W) for W in self.Wq]
+
         self.embedding_layers = NodeEmbedding(graph_embedding_size*num_edge_cat, embedding_size, layers).to(device)
         self.a = [nn.Parameter(torch.empty(size=(2 * graph_embedding_size, 1))) for i in range(num_edge_cat)]
         [nn.init.xavier_uniform_(self.a[e].data, gain=1.414) for e in range(num_edge_cat)]
 
 
     #def forward(self, A, X, num_nodes=None, mini_batch=False):
-    def _prepare_attentional_mechanism_input(self, Wh, A, e, mini_batch):
+    def _prepare_attentional_mechanism_input(self, Wq, Wv,A, e, mini_batch):
         if self.attention == True:
             Wh1 = torch.mm(Wh, self.a[e][:self.graph_embedding_size, :].to(device))      # Wh.shape      : (n_node, hidden_size), self.a : (hidden_size, 1)
             Wh2 = torch.mm(Wh, self.a[e][self.graph_embedding_size:, :].to(device))      # Wh1 & 2.shape : (n_node, 1)
             e = Wh1 + Wh2.T
         else:
-            Wh1 = Wh
-            Wh2 = Wh
+            Wh1 = Wq
+            Wh2 = Wv
             e = Wh1 @ Wh2.T
 
         return e*A
@@ -86,7 +99,9 @@ class GCRN(nn.Module):
                 num_nodes = X.shape[0]
                 E = torch.sparse_coo_tensor(E, torch.ones(torch.tensor(E).shape[1]), (num_nodes, num_nodes)).to(device).to_dense()
                 Wh = X@self.Ws[e]
-                a = self._prepare_attentional_mechanism_input(Wh, E, e, mini_batch = mini_batch)
+                Wq = X @ self.Wq[e]
+                Wv = X @ self.Wv[e]
+                a = self._prepare_attentional_mechanism_input(Wq, Wv, E, e, mini_batch = mini_batch)
                 a = F.softmax(a, dim = 1)
                 H = a*E@Wh
                 temp.append(H)
@@ -106,7 +121,9 @@ class GCRN(nn.Module):
                                             torch.ones(torch.tensor(torch.tensor(A[b][e]).shape[1])),
                                             (num_nodes, num_nodes)).to(device).to_dense()
                     Wh = X[b] @ self.Ws[e]
-                    a = self._prepare_attentional_mechanism_input(Wh, E, e, mini_batch=mini_batch)
+                    Wq = X[b] @ self.Wq[e]
+                    Wv = X[b] @ self.Wv[e]
+                    a = self._prepare_attentional_mechanism_input(Wq, Wv,E, e, mini_batch=mini_batch)
 
                     a = F.softmax(a, dim=1)
                     H = a*E@Wh

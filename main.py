@@ -314,7 +314,7 @@ if __name__ == "__main__":
     episode_polar_chart = polar_chart[0]
     records = list()
     import torch, random
-    seed = 56 #seed수정
+    seed = 1234 #seed수정
     np.random.seed(seed)
     torch.manual_seed(seed)
     random.seed(seed)
