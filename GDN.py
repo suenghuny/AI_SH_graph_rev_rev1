@@ -1116,6 +1116,7 @@ class Agent:
                         target=True,
                         cos=cos)
         self.eval_check(eval = False)
+        cos, taus = self.Q.calc_cos(self.batch_size)
         obs, obs_graph = self.get_node_representation(
             node_features_missile,
             ship_features,
