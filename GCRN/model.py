@@ -88,7 +88,7 @@ class GCRN(nn.Module):
         else:
             Wh1 = Wq
             Wh2 = Wv
-            e = Wh1 @ Wh2.T
+            e = Wh1 + Wh2.T
 
         return e*A
     def forward(self, A, X, mini_batch, layer = 0):
@@ -103,7 +103,7 @@ class GCRN(nn.Module):
                 Wv = X @ self.Wv[e]
                 a = self._prepare_attentional_mechanism_input(Wq, Wv, E, e, mini_batch = mini_batch)
                 a = F.softmax(a, dim = 1)
-                H = a*E@Wh
+                H = a@Wh
                 temp.append(H)
             H = torch.cat(temp, dim = 1)
             #print(H.shape)
@@ -126,7 +126,7 @@ class GCRN(nn.Module):
                     a = self._prepare_attentional_mechanism_input(Wq, Wv,E, e, mini_batch=mini_batch)
 
                     a = F.softmax(a, dim=1)
-                    H = a*E@Wh
+                    H = a@Wh
                     empty[b, :, e, :].copy_(H)
 
             H = empty.reshape(batch_size, num_nodes, self.num_edge_cat*self.graph_embedding_size)
