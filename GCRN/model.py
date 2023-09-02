@@ -77,7 +77,7 @@ class GCRN(nn.Module):
         self.embedding_layers = NodeEmbedding(graph_embedding_size*num_edge_cat, embedding_size, layers).to(device)
         self.a = [nn.Parameter(torch.empty(size=(2 * graph_embedding_size, 1))) for i in range(num_edge_cat)]
         [nn.init.xavier_uniform_(self.a[e].data, gain=1.414) for e in range(num_edge_cat)]
-        self.leakyrelu = nn.LeakyReLU(self.alpha)
+        self.leakyrelu = nn.LeakyReLU(0.1)
 
     #def forward(self, A, X, num_nodes=None, mini_batch=False):
     def _prepare_attentional_mechanism_input(self, Wq, Wv,A, e, mini_batch):
