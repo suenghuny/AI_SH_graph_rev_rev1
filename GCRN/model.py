@@ -80,14 +80,15 @@ class GCRN(nn.Module):
         self.leakyrelu = nn.LeakyReLU(0.05)
 
     #def forward(self, A, X, num_nodes=None, mini_batch=False):
-    def _prepare_attentional_mechanism_input(self, Wq, Wv,A, e, mini_batch):
+    def _prepare_attentional_mechanism_input(self, Wh, A, e, mini_batch):
         if self.attention == True:
             Wh1 = torch.mm(Wh, self.a[e][:self.graph_embedding_size, :].to(device))      # Wh.shape      : (n_node, hidden_size), self.a : (hidden_size, 1)
             Wh2 = torch.mm(Wh, self.a[e][self.graph_embedding_size:, :].to(device))      # Wh1 & 2.shape : (n_node, 1)
             e = Wh1 + Wh2.T
         else:
-            Wh1 = Wq
-            Wh2 = Wv
+            Wh1 = torch.mm(Wh, self.a[e][:self.graph_embedding_size, :].to(device))      # Wh.shape      : (n_node, hidden_size), self.a : (hidden_size, 1)
+            Wh2 = torch.mm(Wh, self.a[e][self.graph_embedding_size:, :].to(device))      # Wh1 & 2.shape : (n_node, 1)
+
             e = Wh1 + Wh2.T
 
         return self.leakyrelu(e*A)
@@ -100,14 +101,11 @@ class GCRN(nn.Module):
                 num_nodes = X.shape[0]
                 E = torch.sparse_coo_tensor(E, torch.ones(torch.tensor(E).shape[1]), (num_nodes, num_nodes)).to(device).to_dense()
                 Wh = X@self.Ws[e]
-                Wq = X @ self.Wq[e]
-                Wv = X @ self.Wv[e]
-                a = self._prepare_attentional_mechanism_input(Wq, Wv, E, e, mini_batch = mini_batch)
+                a = self._prepare_attentional_mechanism_input(Wh, E, e, mini_batch = mini_batch)
                 a = F.softmax(a, dim = 1)
                 H = a@Wh
                 temp.append(H)
             H = torch.cat(temp, dim = 1)
-            #print(H.shape)
             H = self.embedding_layers(H)
             return H
         else:
@@ -115,17 +113,13 @@ class GCRN(nn.Module):
             num_nodes = X.shape[1]
             #mat_a = [torch.zeros(self.num_edge_cat, num_nodes, num_nodes).to(device) for _ in range(batch_size)]
             empty = torch.zeros(batch_size, num_nodes, self.num_edge_cat, self.graph_embedding_size).to(device)
-
             for b in range(batch_size):
                 for e in range(self.num_edge_cat):
                     E = torch.sparse_coo_tensor(A[b][e],
                                             torch.ones(torch.tensor(torch.tensor(A[b][e]).shape[1])),
                                             (num_nodes, num_nodes)).to(device).to_dense()
                     Wh = X[b] @ self.Ws[e]
-                    Wq = X[b] @ self.Wq[e]
-                    Wv = X[b] @ self.Wv[e]
-                    a = self._prepare_attentional_mechanism_input(Wq, Wv,E, e, mini_batch=mini_batch)
-
+                    a = self._prepare_attentional_mechanism_input(Wh,E, e, mini_batch=mini_batch)
                     a = F.softmax(a, dim=1)
                     H = a@Wh
                     empty[b, :, e, :].copy_(H)
