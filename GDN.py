@@ -794,26 +794,19 @@ class Agent:
     # n_representation_action,
     # node_embedding_layers_action
     def load_model(self, path):
-
         checkpoint = torch.load(path)
         e = checkpoint["e"]
         t = checkpoint["t"]
         epsilon = checkpoint["epsilon"]
         self.Q.load_state_dict(checkpoint["Q"])
         self.Q_tar.load_state_dict(checkpoint["Q_tar"])
-        self.node_representation_action_feature.load_state_dict(checkpoint['node_representation_action_feature'])
         self.node_representation_ship_feature.load_state_dict(checkpoint["node_representation_ship_feature"])
-        self.node_representation.load_state_dict(checkpoint["node_representation"])
         self.func_meta_path.load_state_dict(checkpoint["func_meta_path"])
+        self.func_meta_path2.load_state_dict(checkpoint["func_meta_path2"])
         self.DuelingQ.load_state_dict(checkpoint["dueling_Q"])
         self.optimizer.load_state_dict(checkpoint["optimizer"])
-        self.eval_params = list(self.DuelingQ.parameters()) + \
-                           list(self.Q.parameters()) + \
-                           list(self.node_representation_action_feature.parameters()) + \
-                           list(self.node_representation_ship_feature.parameters()) + \
-                           list(self.node_representation.parameters()) + \
-                           list(self.func_meta_path.parameters())
         return e, t, epsilon
+
 
     def get_node_representation(self, missile_node_feature,
                                 ship_features,
@@ -1058,7 +1051,7 @@ class Agent:
         #     print("후", action_feature_dummy[9])
 
 
-        return action_blue, u
+        return action_blue, Q.detach().tolist()
 
 
     def learn(self):

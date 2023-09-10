@@ -22,7 +22,7 @@ def simulation(solution):
     temperature2 = solution[2]
     interval_constant_blue2 = solution[3]
     air_alert_distance = solution[4]
-    data = preprocessing(scenarios)
+    #data = preprocessing(scenarios)
     t = 0
     env = modeler(data,
                   visualize=visualize,
@@ -110,15 +110,16 @@ def action_changer(action, avail_actions):
 
 
 def preprocessing(scenarios):
-    scenario = scenarios[0]
+    scenario = scenarios
     if mode == 'txt':
         if vessl_on == True:
-            input_path = ["/root/AI_SH/Data/{}/ship.txt".format(scenario),
-                          "/root/AI_SH/Data/{}/patrol_aircraft.txt".format(scenario),
-                          "/root/AI_SH/Data/{}/SAM.txt".format(scenario),
-                          "/root/AI_SH/Data/{}/SSM.txt".format(scenario),
-                          "/root/AI_SH/Data/{}/inception.txt".format(scenario)]
+            input_path = ["/root/AI_SH_graph_rev/Data/{}/ship.txt".format(scenario),
+                          "/root/AI_SH_graph_rev/Data/{}/patrol_aircraft.txt".format(scenario),
+                          "/root/AI_SH_graph_rev/Data/{}/SAM.txt".format(scenario),
+                          "/root/AI_SH_graph_rev/Data/{}/SSM.txt".format(scenario),
+                          "/root/AI_SH_graph_rev/Data/{}/inception.txt".format(scenario)]
         else:
+#            print(scenario)
             input_path = ["Data/{}/ship.txt".format(scenario),
                           "Data/{}/patrol_aircraft.txt".format(scenario),
                           "Data/{}/SAM.txt".format(scenario),
@@ -132,7 +133,14 @@ def preprocessing(scenarios):
                    polar_chart=episode_polar_chart,
                    polar_chart_visualize=polar_chart_visualize)
     return data
-
+mode ='txt'
+vessl_on = False
+polar_chart_visualize = False
+polar_chart_scenario1 = [33, 29, 25, 33, 30, 30, 55, 27, 27, 35, 25, 30, 40]  # RCS의 polarchart 적용
+polar_chart = [polar_chart_scenario1]
+df_dict = {}
+episode_polar_chart = polar_chart[0]
+data = preprocessing('scenario1')
 
 def on_start(ga_instance):
     print("on_start()")
@@ -280,6 +288,8 @@ if __name__ == "__main__":
     #     current_solution_pool.append(mutation)
 
     for i in range(0, 10):
+
+        print(episode_polar_chart)
         new_parents = sorted(current_solution_pool, key=fitness_func, reverse=True)[:4]
         print(f"optimal fitness in {i:0>2d} generation: {fitness_func(new_parents[0])}")
         # print("전", new_parents)

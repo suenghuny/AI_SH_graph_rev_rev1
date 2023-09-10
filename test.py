@@ -1,11 +1,22 @@
-from Components.Modeler_Component import *
+import numpy as np
+import torch, random
+from cfg import get_cfg
+from draw_graph import visualize_heterogeneous_graph
+cfg = get_cfg()
+seed = 112
+np.random.seed(seed)
+random.seed(seed)
+torch.manual_seed(seed)
+
+
+from Components.Modeler_Component_test import *
 from Components.Adapter_Component import *
 from Components.Policy import *
 from collections import deque
-from cfg import get_cfg
 from GDN import Agent
-import numpy as np
 
+fix_l = 0
+fix_u = 17
 from scipy.stats import randint
 
 
@@ -13,11 +24,11 @@ def preprocessing(scenarios):
     scenario = scenarios[0]
     if mode == 'txt':
         if vessl_on == True:
-            input_path = ["/root/AI_SH/Data/{}/ship.txt".format(scenario),
-                          "/root/AI_SH/Data/{}/patrol_aircraft.txt".format(scenario),
-                          "/root/AI_SH/Data/{}/SAM.txt".format(scenario),
-                          "/root/AI_SH/Data/{}/SSM.txt".format(scenario),
-                          "/root/AI_SH/Data/{}/inception.txt".format(scenario)]
+            input_path = ["/root/AI_SH_graph_rev/Data/{}/ship.txt".format(scenario),
+                          "/root/AI_SH_graph_rev/Data/{}/patrol_aircraft.txt".format(scenario),
+                          "/root/AI_SH_graph_rev/Data/{}/SAM.txt".format(scenario),
+                          "/root/AI_SH_graph_rev/Data/{}/SSM.txt".format(scenario),
+                          "/root/AI_SH_graph_rev/Data/{}/inception.txt".format(scenario)]
         else:
             input_path = ["Data/{}/ship.txt".format(scenario),
                           "Data/{}/patrol_aircraft.txt".format(scenario),
@@ -34,80 +45,77 @@ def preprocessing(scenarios):
     return data
 
 
-def train(agent, env, e, t, train_start, epsilon, min_epsilon, anneal_step, initializer, output_dir, vdn, n_step,
-          anneal_epsilon):
-    temp = random.uniform(0, 50)
+
+def evaluation(agent, env, with_noise=False):
+    temp = random.uniform(fix_l, fix_u)
     agent_yellow = Policy(env, rule='rule2', temperatures=[temp, temp])
     done = False
     episode_reward = 0
-    step = 0
-    losses = []
-    epi_r = list()
     eval = False
-    sum_learn = 0
+    over = False
     enemy_action_for_transition = [0] * len(env.enemies_fixed_list)
+    friendly_action_for_transition = [0] * len(env.friendlies_fixed_list)
+    overtime = None
 
-
-
-    step_checker = 0
     while not done:
         # print(env.now % (decision_timestep))
         if env.now % (decision_timestep) <= 0.00001:
-            avail_action_blue, target_distance_blue, air_alert_blue = env.get_avail_actions_temp(
-                                                                                                 side='blue')
-            avail_action_yellow, target_distance_yellow, air_alert_yellow = env.get_avail_actions_temp(
-                                                                                                       side='yellow')
-            if cfg.GNN == 'FastGTN':
-                edge_index_ssm_to_ship = env.get_ssm_to_ship_edge_index()
-                edge_index_ssm_to_ssm = env.get_ssm_to_ssm_edge_index()
-                edge_index_sam_to_ssm = env.get_sam_to_ssm_edge_index()
-                heterogeneous_edges = (edge_index_ssm_to_ship, edge_index_ssm_to_ssm, edge_index_sam_to_ssm)
-            else:
-                pass
+            avail_action_blue, target_distance_blue, air_alert_blue = env.get_avail_actions_temp(side='blue')
+            avail_action_yellow, target_distance_yellow, air_alert_yellow = env.get_avail_actions_temp(side='yellow')
+            actions_blue = list()
+            for i in range(len(env.friendlies_fixed_list)):
+                edge_index_ssm_to_ship = env.get_ssm_to_ship_edge_index(k = i)
+                edge_index_ssm_to_ssm = env.get_ssm_to_ssm_edge_index(k = i)
+                edge_index_sam_to_ssm = env.get_sam_to_ssm_edge_index(k = i)
+                edge_index_ship_to_sam = env.get_ship_to_sam_edge_index(k = i)
+                edge_index_ship_to_enemy = env.get_ship_to_enemy_edge_index(k = i)
+                heterogeneous_edges = (edge_index_ssm_to_ship, edge_index_ssm_to_ssm, edge_index_sam_to_ssm, edge_index_ship_to_sam,edge_index_ship_to_enemy)
+                ship_feature = env.get_ship_feature(k = i)
+                missile_node_feature, node_cats = env.get_missile_node_feature(k = i)
+                action_feature = env.get_action_feature(k = i)
+                agent.eval_check(eval=True)
 
-            ship_feature = env.get_ship_feature()
-            edge_index = env.get_edge_index()
+                node_representation, node_representation_graph = agent.get_node_representation(missile_node_feature,
+                                                                                               ship_feature,
+                                                                                               heterogeneous_edges,
+                                                                                               n_node_feature_missile,
+                                                                                               node_cats=node_cats,
+                                                                                               mini_batch=False)  # 차원 : n_agents X n_representation_comm
+                action_blue, u = agent.sample_action(node_representation, node_representation_graph, avail_action_blue[i],
+                                                     epsilon=0, action_feature=action_feature, training=False,
+                                                     with_noise=with_noise)
+                actions_blue.append(action_blue)
+#                visualize_heterogeneous_graph(u[0], edge_index_ssm_to_ship,edge_index_ssm_to_ssm)
 
-            missile_node_feature = env.get_missile_node_feature()
-            enemy_edge_index = [[], []]  # env.get_enemy_edge_index()
-            enemy_node_feature = None  # env.get_enemy_node_feature()
-            action_feature = env.get_action_feature()
-
-            agent.eval_check(eval=True)
-
-            if cfg.GNN == 'GAT':
-                node_representation = agent.get_node_representation(missile_node_feature, ship_feature, edge_index,
-                                                                    n_node_feature_missile,
-                                                                    n_node_features_enemy=n_node_feature_enemy,
-                                                                    mini_batch=False)  # 차원 : n_agents X n_representation_comm
-            else:
-                node_representation = agent.get_node_representation(missile_node_feature, ship_feature,
-                                                                    heterogeneous_edges,
-                                                                    n_node_feature_missile,
-                                                                    n_node_features_enemy=n_node_feature_enemy,
-                                                                    mini_batch=False)  # 차원 : n_agents X n_representation_comm
-            action_blue = agent.sample_action(node_representation, avail_action_blue, epsilon, action_feature, step=t)
             action_yellow = agent_yellow.get_action(avail_action_yellow, target_distance_yellow, air_alert_yellow)
-            reward, win_tag, done, leakers = env.step(action_blue, action_yellow)
-            # print(reward)
+
+            reward, win_tag, done, leakers = env.step(actions_blue, action_yellow)
             episode_reward += reward
-
-            step_checker += 1
-
+            # if (np.abs(episode_reward - 11.0) <= 0.0001) and (over == False):
+            #     overtime = env.now
+            #     over = True
+            #     print([ship.status for ship in env.enemies_fixed_list],
+            #           [[ssm.status for ssm in ship.ssm_launcher] for ship in env.enemies_fixed_list],
+            #           [ship.status for ship in env.friendlies_fixed_list],
+            #           [[ssm.status for ssm in ship.ssm_launcher] for ship in env.friendlies_fixed_list], )
 
 
         else:
             pass_transition = True
-            env.step(action_blue=[0, 0, 0, 0, 0, 0, 0, 0], action_yellow=enemy_action_for_transition,
-                     pass_transition=pass_transition)
-        if done == True:
-            break
-    return episode_reward, epsilon, t, eval, win_tag, leakers
 
+            actions_blue = list()
+            for i in range(len(env.friendlies_fixed_list)):
+                actions_blue.append([0, 0, 0, 0, 0, 0, 0, 0])
+
+
+            env.step(action_blue=actions_blue, action_yellow=enemy_action_for_transition,
+                     pass_transition=pass_transition)
+
+    return episode_reward, win_tag, leakers, overtime
 
 
 if __name__ == "__main__":
-    cfg = get_cfg()
+
     vessl_on = cfg.vessl
     if vessl_on == True:
         import vessl
@@ -137,7 +145,7 @@ if __name__ == "__main__":
     """
     visualize = False  # 가시화 기능 사용 여부 / True : 가시화 적용, False : 가시화 미적용
     size = [600, 600]  # 화면 size / 600, 600 pixel
-    tick = 500  # 가시화 기능 사용 시 빠르기
+    tick = 24  # 가시화 기능 사용 시 빠르기
     n_step = cfg.n_step
     simtime_per_frame = cfg.simtime_per_frame
     decision_timestep = cfg.decision_timestep
@@ -159,12 +167,6 @@ if __name__ == "__main__":
     # scenario = np.random.choice(scenarios)
     episode_polar_chart = polar_chart[0]
     records = list()
-    import torch, random
-
-    seed = 1234
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    random.seed(seed)
 
     data = preprocessing(scenarios)
     t = 0
@@ -180,7 +182,6 @@ if __name__ == "__main__":
     n_node_feature_missile = env.friendlies_fixed_list[0].air_tracking_limit + env.friendlies_fixed_list[
         0].air_engagement_limit + env.friendlies_fixed_list[0].num_m_sam + 1
     n_node_feature_enemy = env.friendlies_fixed_list[0].surface_tracking_limit + 1
-
     agent = Agent(num_agent=1,
                   feature_size_ship=env.get_env_info()["ship_feature_shape"],
                   feature_size_enemy=env.get_env_info()["enemy_feature_shape"],
@@ -225,24 +226,30 @@ if __name__ == "__main__":
                   iqn_N=cfg.iqn_N,
                   n_cos=cfg.n_cos,
                   num_nodes=n_node_feature_missile
+
                   )
-    print("되고있나?")
-    agent.load_model("16400.pt")
+
+    agent.load_model("2200.pt")
     anneal_episode = cfg.anneal_episode
     anneal_step = (cfg.per_beta - 1) / anneal_episode
     print("epsilon_greedy", cfg.epsilon_greedy)
-    epsilon = 0
-    min_epsilon = 0
+    epsilon = cfg.epsilon
+    min_epsilon = cfg.min_epsilon
     eval_lose_ratio = list()
     eval_win_ratio = list()
     lose_ratio = list()
     win_ratio = list()
     reward_list = list()
+
     eval_lose_ratio1 = list()
     eval_win_ratio1 = list()
     anneal_epsilon = (epsilon - min_epsilon) / cfg.anneal_step
-    for e in range(num_iteration):
-        start = time.time()
+    print("noise", cfg.with_noise)
+    non_lose_rate = list()
+
+    n = 500
+    non_lose_rate = list()
+    for j in range(n):
         env = modeler(data,
                       visualize=visualize,
                       size=size,
@@ -252,44 +259,8 @@ if __name__ == "__main__":
                       ciws_threshold=ciws_threshold,
                       action_history_step=cfg.action_history_step
                       )
-        episode_reward, epsilon, t, eval, win_tag, leakers = train(agent, env, e, t, train_start=cfg.train_start,
-                                                                   epsilon=epsilon, min_epsilon=min_epsilon,
-                                                                   anneal_step=anneal_step, initializer=False,
-                                                                   output_dir=None, vdn=True, n_step=n_step,
-                                                                   anneal_epsilon=anneal_epsilon)
+        episode_reward, win_tag, leakers, overtime = evaluation(agent, env, with_noise=cfg.with_noise)
 
-        reward_list.append(episode_reward)
-
-        if vessl_on == True:
-            vessl.log(step=e, payload={'reward': episode_reward})
-            if win_tag == 'lose':
-                vessl.log(step=e, payload={'lose': -1})
-                lose_ratio.append(-1)
-            else:
-                vessl.log(step=e, payload={'lose': 0})
-                lose_ratio.append(0)
-        else:
-            if win_tag == 'lose':
-                lose_ratio.append(-1)
-            else:
-                lose_ratio.append(0)
-        if e % 10 == 0:
-            import os
-            import pandas as pd
-            df = pd.DataFrame(reward_list)
-            df.to_csv(output_dir + 'episode_reward_test.csv')
-            df_eval_lose = pd.DataFrame(eval_lose_ratio)
-            df_eval_win = pd.DataFrame(eval_win_ratio)
-            df_lose = pd.DataFrame(lose_ratio)
-            df_win = pd.DataFrame(win_ratio)
-            df_eval_lose.to_csv(output_dir + 'eval_lose_test.csv')
-            df_eval_win.to_csv(output_dir + 'eval_win_test.csv')
-            df_lose.to_csv(output_dir + 'lose_ratio_test.csv')
-            df_win.to_csv(output_dir + 'win_ratio_test.csv')
-
-        print(
-            "Total reward in episode {} = {}, epsilon : {}, time_step : {}, episode_duration : {}, win_tag : {}".format(
-                e,
-                np.round(episode_reward, 3),
-                np.round(epsilon, 3),
-                t, np.round(time.time() - start, 3), win_tag))
+        if win_tag == 'draw' or win_tag == 'win':
+            non_lose_rate.append(1)
+        print('전', win_tag, episode_reward, env.now, overtime, np.sum(non_lose_rate)/(j+1))

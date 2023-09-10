@@ -206,6 +206,7 @@ class Missile:
         self.a_x = 0
         self.a_y = 0
 
+
     def destroying(self, enemies, ships, flying_ssms_friendly, flying_ssms_enemy, flying_sams_friendly, flying_sams_enemy):
         if self.env.temp_termination != True:
             r = cal_distance(self.target, self)

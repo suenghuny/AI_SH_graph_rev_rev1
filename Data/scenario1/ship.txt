@@ -36,3 +36,4 @@ lsam_launching_duration_max	7		7		7       7
 msam_launching_duration_min	2		2		2       2
 msam_launching_duration_max	3		3		3       3
 side						blue	yellow	yellow  yellow
+number						    1		2		3       4

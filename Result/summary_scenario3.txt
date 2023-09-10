@@ -1,2 +1,0 @@
-lose ratio : 0.2
-remain ratio : 0.1
