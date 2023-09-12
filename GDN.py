@@ -794,6 +794,7 @@ class Agent:
     # n_representation_action,
     # node_embedding_layers_action
     def load_model(self, path):
+
         checkpoint = torch.load(path)
         e = checkpoint["e"]
         t = checkpoint["t"]
@@ -804,9 +805,25 @@ class Agent:
         self.func_meta_path.load_state_dict(checkpoint["func_meta_path"])
         self.func_meta_path2.load_state_dict(checkpoint["func_meta_path2"])
         self.DuelingQ.load_state_dict(checkpoint["dueling_Q"])
-        self.optimizer.load_state_dict(checkpoint["optimizer"])
-        return e, t, epsilon
+        # self.optimizer.load_state_dict(checkpoint["optimizer"])
+        # self.eval_params = list(self.DuelingQ.parameters()) + \
+        #                    list(self.Q.parameters()) + \
+        #                    list(self.node_representation_action_feature.parameters()) + \
+        #                    list(self.node_representation_ship_feature.parameters()) + \
+        #                    list(self.node_representation.parameters()) + \
+        #                    list(self.func_meta_path.parameters())
 
+        # 'e': e,
+        # 't': t,
+        # 'epsilon': epsilon,
+        # 'Q': self.Q.state_dict(),
+        # 'Q_tar': self.Q_tar.state_dict(),
+        # 'node_representation_ship_feature': self.node_representation_ship_feature.state_dict(),
+        # 'func_meta_path': self.func_meta_path.state_dict(),
+        # 'func_meta_path2': self.func_meta_path2.state_dict(),
+        # 'dueling_Q': self.DuelingQ.state_dict(),
+        # 'optimizer': self.optimizer.state_dict()}, "{}".format(path))
+        return e, t, epsilon
 
     def get_node_representation(self, missile_node_feature,
                                 ship_features,
@@ -1051,7 +1068,7 @@ class Agent:
         #     print("후", action_feature_dummy[9])
 
 
-        return action_blue, Q.detach().tolist()
+        return action_blue, u
 
 
     def learn(self):
@@ -1177,4 +1194,3 @@ class Agent:
             target_param.data.copy_(tau * local_param.data + (1 - tau) * target_param.data)
         for target_param, local_param in zip(self.DuelingQtar.parameters(), self.DuelingQ.parameters()):
             target_param.data.copy_(tau * local_param.data + (1 - tau) * target_param.data)
-

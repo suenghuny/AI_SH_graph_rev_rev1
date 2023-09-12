@@ -21,7 +21,7 @@ from scipy.stats import randint
 
 
 def preprocessing(scenarios):
-    scenario = scenarios[0]
+    scenario = scenarios
     if mode == 'txt':
         input_path = ["Data/Test/dataset{}/ship.txt".format(scenario),
                       "Data/Test/dataset{}/patrol_aircraft.txt".format(scenario),
