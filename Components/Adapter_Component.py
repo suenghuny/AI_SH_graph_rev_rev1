@@ -9,7 +9,6 @@ class Adapter:
         self.mode = mode
         self.polar_chart = polar_chart
         self.ship_data, self.SAM_data, self.SSM_data, self.patrol_aircraft_data, self.inception_data = self.preprocessing(input_path)
-        print("니니니니")
         self.get_rcs = self.interpolating_rcs(polar_chart_visualize)
 
     def preprocessing(self, input_path):

@@ -1,7 +1,7 @@
 import numpy as np
 
 from Components.Adapter_Component import *
-from Components.Simulation_Component_test import *
+from Components.Simulation_Component import *
 from collections import deque
 import random
 import sys
@@ -120,9 +120,9 @@ class Environment:
         inception_data = self.data.inception_data
         noise = random.uniform(-10, 10)
         self.missile_speed_list = list()
-        inception_range = inception_data['inception_angle']
+        inception_range = random.uniform(0, 360)
         for key, value in data.ship_data.items():
-            if value['side']=='blue':
+            if key == 1:
                 speed = 25
                 course = 90
                 initial_position_x = 50
@@ -138,9 +138,9 @@ class Environment:
                     speed = 25
                     course = 90
                     initial_position_x = 50 + 10 * inception_data['inception_distance'] * np.cos(
-                        inception_range * np.pi / 180)+ 10* random.normalvariate(inception_data['enemy_spacing_mean'], inception_data['enemy_spacing_std'])
+                        inception_range * np.pi / 180)+ 10 * random.normalvariate(inception_data['enemy_spacing_mean'], inception_data['enemy_spacing_std'])
                     initial_position_y = 50 + 10 * inception_data['inception_distance'] * np.sin(
-                        inception_range* np.pi / 180) + 10* random.normalvariate(inception_data['enemy_spacing_mean'], inception_data['enemy_spacing_std'])
+                        inception_range* np.pi / 180) + 10 * random.normalvariate(inception_data['enemy_spacing_mean'], inception_data['enemy_spacing_std'])
 
 
 
@@ -248,13 +248,7 @@ class Environment:
         for _ in range(self.action_history_step):
             self.f11_deque.append(self.f11)
 
-    def forcing_visualize(self):
-        self.pygame = pygame
-        self.game_initializer = self.pygame.init()
-        self.clock = pygame.time.Clock()
-        self.screen = self.pygame.display.set_mode(self.size)
-        self.title = "Suceptibility Evaluation"
-        self.pygame.display.set_caption(self.title)
+
 
     def get_env_info(self):
         ship=self.friendlies[0]
@@ -504,7 +498,7 @@ class Environment:
                                             avail_action_friendly[s + ship.surface_tracking_limit + 1] = True
                                             distance_list.append(concat_distance[s])
             avail_actions.append(avail_action_friendly)
-            if distance_list == list():
+            if distance_list==list():
                 distance_list.append(1)
             else:
                 if side == 'blue':
@@ -518,8 +512,6 @@ class Environment:
                     else:
                         distance_list.insert(0, np.min(distance_list)*self.interval_constant_yellow[0])
             target_distance_list.append(distance_list)
-
-
         return avail_actions, target_distance_list, air_alert
 
     def get_avail_actions_temp(self, side='blue'):
@@ -533,86 +525,86 @@ class Environment:
             air_alert = self.get_target_availability(self.friendlies_fixed_list, self.avail_action_friendly, self.enemies_fixed_list, self.flying_ssms_enemy, side,  speed_normalizing = True)
         return avail_actions, target_distance_list, air_alert
 
-    def get_ship_feature(self, k = 1):
+    def get_ship_feature(self):
         ship_feature = list()
         n_enemy_ssm = 0
         n_enemy_ship = 0
         for enemy in self.enemies_fixed_list:
             n_enemy_ship += 1
             n_enemy_ssm += enemy.num_ssm
-        ship = self.friendlies_fixed_list[k]
-        'LSAM : LOCK-ON 상태'
-        'LSAM : BRM 상태'
-        'LSAM : CCM 상태'
-        'LSAM : 발사 준비 중'
-        'MSAM : 발사 준비 중'
-        f1 = 0 # LSAM : LOCK-ON 상태
-        f2 = 0 # LSAM : BRM
-        f3 = 0 # LSAM : CCM
-        f4 = 0 # LSAM : 발사 준비 중
-        f5 = 0 # MSAM : BRM
-        f6 = 0 # MSAM : CCM
-        f7 = 0 # MSAM : 발사 준비 중
-        for message in ship.air_engagement_managing_list:
-            sam = message[0]
-            if sam.cla == 'LSAM':
-                if sam.fly_mode == 'brm':
-                    if sam.seeker.on == 'lock_on':
-                        f1 += 1/ship.air_engagement_limit
+        for ship in self.friendlies_fixed_list:
+            'LSAM : LOCK-ON 상태'
+            'LSAM : BRM 상태'
+            'LSAM : CCM 상태'
+            'LSAM : 발사 준비 중'
+            'MSAM : 발사 준비 중'
+            f1 = 0 # LSAM : LOCK-ON 상태
+            f2 = 0 # LSAM : BRM
+            f3 = 0 # LSAM : CCM
+            f4 = 0 # LSAM : 발사 준비 중
+            f5 = 0 # MSAM : BRM
+            f6 = 0 # MSAM : CCM
+            f7 = 0 # MSAM : 발사 준비 중
+            for message in ship.air_engagement_managing_list:
+                sam = message[0]
+                if sam.cla == 'LSAM':
+                    if sam.fly_mode == 'brm':
+                        if sam.seeker.on == 'lock_on':
+                            f1 += 1/ship.air_engagement_limit
+                        else:
+                            f2 += 1/ship.air_engagement_limit
+                    elif sam.fly_mode == 'ccm':
+                        f3 += 1/ship.air_engagement_limit
+                    elif sam.fly_mode == None:
+                        f4 += 1/2
+                if sam.cla == 'MSAM':
+                    if sam.fly_mode == None:
+                        f7 += 1
+
+            for sam in self.flying_sams_friendly:
+                if sam.cla == 'MSAM':
+                    if sam.fly_mode == 'brm':
+                        f5 += 1/ship.air_engagement_limit
+                    elif sam.fly_mode == 'ccm':
+                        f6 += 1/ship.air_engagement_limit
+
+            empty0 = [f1,f2,f3,f4,f5,f6,f7]
+            n = cfg.discr_n
+            empty1 = [0] * n
+            for enemy_ssm in ship.ssm_detections:
+                for k in range(n):
+                    if (k) / n * ship.detection_range < cal_distance(ship, enemy_ssm) <= (k+1)/n * ship.detection_range:
+                        empty1[k] += 1/ship.air_tracking_limit
+
+            empty2 = [len(ship.surface_prelaunching_managing_list)/ship.surface_engagement_limit,
+                      len(ship.m_sam_launcher) / ship.num_m_sam,
+                      len(ship.l_sam_launcher) / ship.num_l_sam,
+                      len(ship.ssm_launcher) / ship.num_ssm,
+                      self.f7 / n_enemy_ssm,
+                      self.f8 / n_enemy_ship,
+                      self.f9 / self.simtime_per_framerate,
+                      self.f10 / self.simtime_per_framerate,
+                      ]
+
+            z = np.concatenate([empty0, empty1, empty2]).reshape(-1, 1).tolist()
+
+            for i in range(len(ship.action_history)):
+                if ship.action_history[i] != None:
+                    x1, x2, x3, x4, x5, x6 = self.get_feature(ship, ship.action_history[i])
+                    target = ship.action_history[i]
+                    if target.cla == 'ship':
+                        if target.status != 'destroyed':
+                            z.append([x1, x2, x3, x4, 1])
+                        else:
+                            z.append([0,0,0,0,0])
                     else:
-                        f2 += 1/ship.air_engagement_limit
-                elif sam.fly_mode == 'ccm':
-                    f3 += 1/ship.air_engagement_limit
-                elif sam.fly_mode == None:
-                    f4 += 1/2
-            if sam.cla == 'MSAM':
-                if sam.fly_mode == None:
-                    f7 += 1
-
-        for sam in self.flying_sams_friendly:
-            if sam.cla == 'MSAM':
-                if sam.fly_mode == 'brm':
-                    f5 += 1/ship.air_engagement_limit
-                elif sam.fly_mode == 'ccm':
-                    f6 += 1/ship.air_engagement_limit
-
-        empty0 = [f1,f2,f3,f4,f5,f6,f7]
-        n = cfg.discr_n
-        empty1 = [0] * n
-        for enemy_ssm in ship.ssm_detections:
-            for k in range(n):
-                if (k) / n * ship.detection_range < cal_distance(ship, enemy_ssm) <= (k+1)/n * ship.detection_range:
-                    empty1[k] += 1/ship.air_tracking_limit
-
-        empty2 = [len(ship.surface_prelaunching_managing_list)/ship.surface_engagement_limit,
-                  len(ship.m_sam_launcher) / ship.num_m_sam,
-                  len(ship.l_sam_launcher) / ship.num_l_sam,
-                  len(ship.ssm_launcher) / ship.num_ssm,
-                  self.f7 / n_enemy_ssm,
-                  self.f8 / n_enemy_ship,
-                  self.f9 / self.simtime_per_framerate,
-                  self.f10 / self.simtime_per_framerate,
-                  ]
-
-        z = np.concatenate([empty0, empty1, empty2]).reshape(-1, 1).tolist()
-
-        for i in range(len(ship.action_history)):
-            if ship.action_history[i] != None:
-                x1, x2, x3, x4, x5, x6 = self.get_feature(ship, ship.action_history[i])
-                target = ship.action_history[i]
-                if target.cla == 'ship':
-                    if target.status != 'destroyed':
-                        z.append([x1, x2, x3, x4, 1])
-                    else:
-                        z.append([0,0,0,0,0])
+                        if target.status != 'destroyed':
+                            z.append([x1, x2, x3, x4, 1])
+                        else:
+                            z.append([0,0,0,0,0])
                 else:
-                    if target.status != 'destroyed':
-                        z.append([x1, x2, x3, x4, 1])
-                    else:
-                        z.append([0,0,0,0,0])
-            else:
-                z.append([0,0,0,0,0])
-        ship_feature.append(np.concatenate(z).tolist())
+                    z.append([0,0,0,0,0])
+            ship_feature.append(np.concatenate(z).tolist())
         return ship_feature
 
 
@@ -632,9 +624,9 @@ class Environment:
         if distance <= range3:
             return 4
 
-    def get_ssm_to_ship_edge_index(self, k = 1): # 변경 완료
+    def get_ssm_to_ship_edge_index(self): # 변경 완료
         edge_index = [[],[]]
-        ship = self.friendlies_fixed_list[k]
+        ship = self.friendlies_fixed_list[0]
         len_ssm_detections = len(ship.ssm_detections)
         len_enemies = len(self.enemies_fixed_list)
         for i in range(0, len_ssm_detections):
@@ -644,9 +636,9 @@ class Environment:
             edge_index[0].append(i+len_enemies+1)
 
         return edge_index
-    def get_ssm_to_ssm_edge_index(self, k = 1):  #변경 완료
+    def get_ssm_to_ssm_edge_index(self):  #변경 완료
         edge_index = [[],[]]
-        ship = self.friendlies_fixed_list[k]
+        ship = self.friendlies_fixed_list[0]
         len_ssm_detections = len(ship.ssm_detections)
         len_enemies = len(self.enemies_fixed_list)
         for j in range(len_ssm_detections-1, -1, -1):
@@ -662,9 +654,9 @@ class Environment:
 
         return edge_index
 
-    def get_sam_to_ssm_edge_index(self, k = 1): # 변경 완료
+    def get_sam_to_ssm_edge_index(self): # 변경 완료
         edge_index = [[],[]]
-        ship = self.friendlies_fixed_list[k]
+        ship = self.friendlies_fixed_list[0]
         len_ssm_detections = len(ship.ssm_detections)
         len_flying_sams_friendly = len(self.flying_sams_friendly)
         len_enemies = len(self.enemies_fixed_list)
@@ -679,9 +671,9 @@ class Environment:
                     edge_index[0].append(j+len_enemies+len_ssm_detections+1)
         return edge_index
 
-    def get_ship_to_sam_edge_index(self, k = 1): #변경 완료
+    def get_ship_to_sam_edge_index(self): #변경 완료
         edge_index = [[],[]]
-        ship = self.friendlies_fixed_list[k]
+        ship = self.friendlies_fixed_list[0]
         len_ssm_detections = len(ship.ssm_detections)
         len_flying_sams_friendly = len(self.flying_sams_friendly)
         len_enemies = len(self.enemies_fixed_list)
@@ -692,9 +684,9 @@ class Environment:
             edge_index[0].append(j+len_enemies+len_ssm_detections+1)
         return edge_index
 
-    def get_ship_to_enemy_edge_index(self, k = 1): # 변경 완료
+    def get_ship_to_enemy_edge_index(self): # 변경 완료
         edge_index = [[],[]]
-        ship = self.friendlies_fixed_list[k]
+        ship = self.friendlies_fixed_list[0]
         len_enemies = len(self.enemies_fixed_list)
         for j in range(len(self.enemies_fixed_list)):
             enemy = self.enemies_fixed_list[j]
@@ -742,23 +734,25 @@ class Environment:
             return r, v, (theta_v + 3.14) / (6.28), ((theta_r - theta_v)+(6.28))/(12.56), a, ((theta_v - theta_a)+(5))/(8.5)
 
 
-    def get_action_feature(self,k = 0):
+    def get_action_feature(self):
         dummy = [0,0,0,0,0,0,0,0]
         node_features = [dummy]
-        ship =self.friendlies_fixed_list[k]
-        for enemy in self.enemies_fixed_list:
-            if enemy.status != 'destroyed':
-                f1, f2, f3, f4, f5, f6 = self.get_feature(ship, enemy, action_feature= True)
-                ssm_speed = enemy.speed_m
-                node_features.append([f1, f2, f3, f4, f5, f6, 0, ssm_speed/1.4])
-                enemy.last_action_feature[k] = [f1, f2, f3, f4, f5, f6, 0, ssm_speed/1.4]
+        for ship in self.friendlies_fixed_list:
+            for enemy in self.enemies_fixed_list:
+                if enemy.status != 'destroyed':
+                    f1, f2, f3, f4, f5, f6 = self.get_feature(ship, enemy, action_feature= True)
+                    ssm_speed = enemy.speed_m
+                    node_features.append([f1, f2, f3, f4, f5, f6, 0, ssm_speed/1.4])
+                    enemy.last_action_feature = [f1, f2, f3, f4, f5, f6, 0, ssm_speed/1.4]
         if ship.surface_tracking_limit+1-len(node_features)>0:
             for _ in range(ship.surface_tracking_limit+1-len(node_features)):
                 node_features.append(dummy)
-        for missile in ship.ssm_detections:
-            f1, f2, f3, f4, f5, f6 = self.get_feature(ship, missile, action_feature= True)
-            node_features.append([f1, f2, f3, f4, f5, f6, 1, 0])
-            missile.last_action_feature[k] = [f1, f2, f3, f4, f5, f6, 1, 0]
+
+        for ship in self.friendlies_fixed_list:
+            for missile in ship.ssm_detections:
+                f1, f2, f3, f4, f5, f6 = self.get_feature(ship, missile, action_feature= True)
+                node_features.append([f1, f2, f3, f4, f5, f6, 1, 0])
+                missile.last_action_feature = [f1, f2, f3, f4, f5, f6, 1, 0]
         #print("전",len(node_features))
         # if ship.surface_tracking_limit+ship.air_tracking_limit+1-len(node_features) >0:
         #     for _ in range(ship.surface_tracking_limit+ship.air_tracking_limit+1-len(node_features)):
@@ -766,7 +760,7 @@ class Environment:
 
         return node_features
 
-    def get_missile_node_feature(self, k = 0):
+    def get_missile_node_feature(self, rad_coordinate = True):
         dummy =[0,
                 0,
                 0,
@@ -776,28 +770,28 @@ class Environment:
         len_flying_sams_friendly = len(self.flying_sams_friendly)
         node_cats = [[0],[],[],[] ]
         idx = 0
-        ship = self.friendlies_fixed_list[k]
-        for enemy in self.enemies_fixed_list:
-            if enemy.status != 'destroyed':
-                f1, f2, f3, f4, f5, f6 = self.get_feature(ship, enemy)
+        for ship in self.friendlies_fixed_list:
+            for enemy in self.enemies_fixed_list:
+                if enemy.status != 'destroyed':
+                    f1, f2, f3, f4, f5, f6 = self.get_feature(ship, enemy)
+                    node_features.append([f1, f2, f3, f4])
+                    idx += 1
+                else:
+                    node_features.append(dummy)
+                    idx += 1
+                node_cats[1].append(idx)
+            for missile in ship.ssm_detections:
+                f1, f2, f3, f4, f5, f6 = self.get_feature(ship, missile)
                 node_features.append([f1, f2, f3, f4])
                 idx += 1
-            else:
-                node_features.append(dummy)
+                node_cats[2].append(idx)
+            for j in range(len_flying_sams_friendly):
+                missile = self.flying_sams_friendly[j]
+                original_target = missile.original_target
+                f1, f2, f3, f4, f5, f6 = self.get_feature(original_target, missile)
+                node_features.append([f1, f2, f3, f4])
                 idx += 1
-            node_cats[1].append(idx)
-        for missile in ship.ssm_detections:
-            f1, f2, f3, f4, f5, f6 = self.get_feature(ship, missile)
-            node_features.append([f1, f2, f3, f4])
-            idx += 1
-            node_cats[2].append(idx)
-        for j in range(len_flying_sams_friendly):
-            missile = self.flying_sams_friendly[j]
-            original_target = missile.original_target
-            f1, f2, f3, f4, f5, f6 = self.get_feature(original_target, missile)
-            node_features.append([f1, f2, f3, f4])
-            idx += 1
-            node_cats[3].append(idx)
+                node_cats[3].append(idx)
         return node_features, node_cats
 
 
@@ -846,7 +840,7 @@ class Environment:
             self.temp_max_air_engagement.append(len(ship.air_engagement_managing_list))
             if ship.status != 'destroyed':
                 if rl == True:
-                    ship.target_allot_by_action_feature(action_blue[i])
+                    ship.target_allot_by_action_feature(action_blue)
                 else:
                     ship.target_allocation_process(action_blue[i])
                 ship.air_prelaunching_process()
@@ -858,7 +852,7 @@ class Environment:
                     ship.show()
                     font1 = pygame.font.Font(None, 15)
                     img1 = font1.render('SSM : {}_LSAM : {}_MSAM : {}'.format(len(ship.ssm_launcher), len(ship.l_sam_launcher), len(ship.m_sam_launcher)), True, (150, 120, 15))
-                    #self.screen.blit(img1, (ship.position_x, ship.position_y+20))
+                    self.screen.blit(img1, (ship.position_x, ship.position_y+20))
 
         for i in range(len(self.enemies_fixed_list)):
             ship = self.enemies_fixed_list[i]
@@ -878,7 +872,7 @@ class Environment:
                     ship.show()
                     font1 = pygame.font.Font(None, 15)
                     img1 = font1.render('SSM : {}_LSAM : {}_MSAM : {}'.format(len(ship.ssm_launcher), len(ship.l_sam_launcher), len(ship.m_sam_launcher)), True, (150, 120, 15))
-                    #self.screen.blit(img1, (ship.position_x, ship.position_y+20))
+                    self.screen.blit(img1, (ship.position_x, ship.position_y+20))
 
 
         for i in range(len(self.friendlies_fixed_list)):
@@ -913,10 +907,10 @@ class Environment:
                 ssm.show()
                 font1 = pygame.font.Font(None, 15)
                 img1 = font1.render('{}, {}'.format(ssm.id, np.round(cal_distance(ssm, ssm.target))), True, (150, 120, 15))
-                #self.screen.blit(img1, (ssm.position_x, ssm.position_y))
+                self.screen.blit(img1, (ssm.position_x, ssm.position_y))
 
                 img1 = font1.render('est, {}, {}'.format(ssm.id, ssm.fly_mode), True, (0,250,0))
-                #self.screen.blit(img1, (ssm.estimated_hitting_point_x, ssm.estimated_hitting_point_y))
+                self.screen.blit(img1, (ssm.estimated_hitting_point_x, ssm.estimated_hitting_point_y))
 
         temp_flying_ssms_enemy = self.flying_ssms_enemy[:]
         for ssm in temp_flying_ssms_enemy:
@@ -929,9 +923,9 @@ class Environment:
                 ssm.show()
                 font1 = pygame.font.Font(None, 15)
                 img1 = font1.render('{} ,{}'.format(ssm.id, np.round(cal_distance(ssm, ssm.target))), True, (150, 120, 15))
-                #self.screen.blit(img1, (ssm.position_x, ssm.position_y))
+                self.screen.blit(img1, (ssm.position_x, ssm.position_y))
                 img1 = font1.render('est, {}, {}'.format(ssm.id, ssm.fly_mode), True, (0,250,0))
-                #self.screen.blit(img1, (ssm.estimated_hitting_point_x, ssm.estimated_hitting_point_y))
+                self.screen.blit(img1, (ssm.estimated_hitting_point_x, ssm.estimated_hitting_point_y))
 
         temp_flying_sams_friendly = self.flying_sams_friendly[:]
         for sam in temp_flying_sams_friendly:
@@ -943,9 +937,9 @@ class Environment:
                 sam.show()
                 font1 = pygame.font.Font(None, 15)
                 img1 = font1.render('{}, {}, {}'.format(np.round(cal_distance(sam, sam.target)), np.round(sam.cal_distance_estimated_hitting_point()), sam.fly_mode), True, (150, 120, 15))
-                #self.screen.blit(img1, (sam.position_x, sam.position_y))
+                self.screen.blit(img1, (sam.position_x, sam.position_y))
                 img1 = font1.render('est, {}, {}'.format(sam.id, sam.fly_mode), True, (0,250,0))
-                #self.screen.blit(img1, (sam.estimated_hitting_point_x, sam.estimated_hitting_point_y))
+                self.screen.blit(img1, (sam.estimated_hitting_point_x, sam.estimated_hitting_point_y))
 
         temp_flying_sams_enemy = self.flying_sams_enemy[:]
         for sam in temp_flying_sams_enemy:
@@ -957,10 +951,10 @@ class Environment:
                 sam.show()
                 font1 = pygame.font.Font(None, 15)
                 img1 = font1.render('{}, {}'.format(sam.id, sam.fly_mode), True, (0,250,0))
-                #self.screen.blit(img1, (sam.position_x, sam.position_y))
+                self.screen.blit(img1, (sam.position_x, sam.position_y))
                 #
                 img1 = font1.render('est, {}, {}'.format(sam.id, sam.fly_mode), True, (0,250,0))
-                #self.screen.blit(img1, (sam.estimated_hitting_point_x, sam.estimated_hitting_point_y))
+                self.screen.blit(img1, (sam.estimated_hitting_point_x, sam.estimated_hitting_point_y))
 
         if self.visualize == True:
             font1 = pygame.font.Font(None, 30)
@@ -975,10 +969,6 @@ class Environment:
         win_tag = None
         done = False
         #if self.now <= 2000:
-
-        # screen_capture = pygame.surfarray.array3d(self.screen)
-        # image_surface = self.pygame.surfarray.make_surface(screen_capture)
-        # self.pygame.image.save(image_surface, "screenshot{}.png".format(self.now))
 
         if pass_transition == False:
             missile_destroyed_cal = 0
@@ -1006,8 +996,7 @@ class Environment:
             self.f10 = enemy_destroyed_cal - self.last_destroyed_enemy
             # reward = 20 * (enemy_destroyed_cal - self.last_destroyed_enemy) + \
             #          0.833 * (missile_destroyed_cal - self.last_destroyed_missile)
-            len_living_ship = len([1 for ship in self.friendlies_fixed_list if (ship.status != 'destroyed')])
-            if len_living_ship>0:
+            if ship.status != 'destroyed':
                 reward = 1 * (missile_destroyed_cal - self.last_destroyed_missile)
 
             else:
@@ -1103,6 +1092,7 @@ class Environment:
             #print(win_tag,len(self.friendlies), len(self.enemies), reward)
 
             reward = reward/2
+
 
 
             if self.visualize == True:

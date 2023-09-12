@@ -23,18 +23,11 @@ from scipy.stats import randint
 def preprocessing(scenarios):
     scenario = scenarios[0]
     if mode == 'txt':
-        if vessl_on == True:
-            input_path = ["/root/AI_SH_graph_rev/Data/{}/ship.txt".format(scenario),
-                          "/root/AI_SH_graph_rev/Data/{}/patrol_aircraft.txt".format(scenario),
-                          "/root/AI_SH_graph_rev/Data/{}/SAM.txt".format(scenario),
-                          "/root/AI_SH_graph_rev/Data/{}/SSM.txt".format(scenario),
-                          "/root/AI_SH_graph_rev/Data/{}/inception.txt".format(scenario)]
-        else:
-            input_path = ["Data/{}/ship.txt".format(scenario),
-                          "Data/{}/patrol_aircraft.txt".format(scenario),
-                          "Data/{}/SAM.txt".format(scenario),
-                          "Data/{}/SSM.txt".format(scenario),
-                          "Data/{}/inception.txt".format(scenario)]
+        input_path = ["Data/Test/dataset{}/ship.txt".format(scenario),
+                      "Data/Test/dataset{}/patrol_aircraft.txt".format(scenario),
+                      "Data/Test/dataset{}/SAM.txt".format(scenario),
+                      "Data/Test/dataset{}/SSM.txt".format(scenario),
+                      "Data/Test/dataset{}/inception.txt".format(scenario)]
     else:
         input_path = "Data\input_data.xlsx"
 
@@ -58,7 +51,6 @@ def evaluation(agent, env, with_noise=False):
     overtime = None
 
     while not done:
-        # print(env.now % (decision_timestep))
         if env.now % (decision_timestep) <= 0.00001:
             avail_action_blue, target_distance_blue, air_alert_blue = env.get_avail_actions_temp(side='blue')
             avail_action_yellow, target_distance_yellow, air_alert_yellow = env.get_avail_actions_temp(side='yellow')
@@ -85,19 +77,11 @@ def evaluation(agent, env, with_noise=False):
                                                      epsilon=0, action_feature=action_feature, training=False,
                                                      with_noise=with_noise)
                 actions_blue.append(action_blue)
-#                visualize_heterogeneous_graph(u[0], edge_index_ssm_to_ship,edge_index_ssm_to_ssm)
-
             action_yellow = agent_yellow.get_action(avail_action_yellow, target_distance_yellow, air_alert_yellow)
 
             reward, win_tag, done, leakers = env.step(actions_blue, action_yellow)
             episode_reward += reward
-            # if (np.abs(episode_reward - 11.0) <= 0.0001) and (over == False):
-            #     overtime = env.now
-            #     over = True
-            #     print([ship.status for ship in env.enemies_fixed_list],
-            #           [[ssm.status for ssm in ship.ssm_launcher] for ship in env.enemies_fixed_list],
-            #           [ship.status for ship in env.friendlies_fixed_list],
-            #           [[ssm.status for ssm in ship.ssm_launcher] for ship in env.friendlies_fixed_list], )
+
 
 
         else:
@@ -168,7 +152,7 @@ if __name__ == "__main__":
     episode_polar_chart = polar_chart[0]
     records = list()
 
-    data = preprocessing(scenarios)
+    data = preprocessing(1)
     t = 0
     env = modeler(data,
                   visualize=visualize,
