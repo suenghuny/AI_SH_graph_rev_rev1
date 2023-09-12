@@ -322,7 +322,7 @@ if __name__ == "__main__":
     records = list()
     import torch, random
 
-    seed = 1234  # seed수정
+    seed = 4232  # seed수정
     np.random.seed(seed)
     torch.manual_seed(seed)
     random.seed(seed)
