@@ -3,7 +3,7 @@ from Components.Adapter_Component import *
 from Components.Policy import *
 from cfg import get_cfg
 import numpy as np
-from scipy.optimize import dual_annealing
+from scipy.optimize import minimize
 
 
 from simanneal import Annealer
@@ -159,12 +159,12 @@ if __name__ == "__main__":
         cooling_rate = 0.95
 
         solution_space = [[0, 20],[0, 50],[0, 20],[0, 50],[0,200]]
+        x0 = [3., 2, 1, 2, 20]
+
+        #initial_guess = [random.choice(dim_range) for dim_range in solution_space]
 
 
-        initial_guess = [random.choice(dim_range) for dim_range in solution_space]
-
-
-        result = dual_annealing(fitness_func, bounds=solution_space)
+        result = minimize(fitness_func,x0 = x0,  bounds=solution_space, method='CG')
 
 
 

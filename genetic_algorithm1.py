@@ -36,7 +36,7 @@ def simulation(solution):
     print(score, solution)
     return score
 
-def fitness_func(solution):
+def fitness_func(ga_instance, solution, solution_idx):
     score = simulation(solution)
     return score
 
@@ -149,49 +149,29 @@ if __name__ == "__main__":
         df_dict = {}
         records = list()
 
-        population_size = 20
-        num_generations = 12
-        mutation_range = 100
         solution_space = [[i for i in range(0, 20)], [i  for i in range(0, 50)],
                           [i  for i in range(0, 20)], [i  for i in range(0, 50)], [i for i in range(0,200)]]
-        n_pool = population_size
-        #current_solution_pool = [[2, 0, 19, 39, 168], [5, 5, 0, 49, 159], [5, 5, 0, 46, 159], [5, 5, 0, 49, 159]]
-        # for n in range(n_pool):
-        #     solutions = list()
-        #     for k in range(len(solution_space)):
-        #         s = np.random.choice(solution_space[k])
-        #         solutions.append(s)
-        #     current_solution_pool.append(solutions)
-        num_mutation = 50
-        for i in range(0, 10):
+        num_genes = len(solution_space)
 
-            print(episode_polar_chart)
-            new_parents = sorted(current_solution_pool, key=fitness_func, reverse=True)[:4]
-            print(f"optimal fitness in {i:0>2d} generation: {fitness_func(new_parents[0])}")
-            cross_over_position = np.random.choice([2,3,4])
-            crossovers = [
-                new_parents[0][:cross_over_position] + new_parents[1][cross_over_position:],
-                new_parents[1][:cross_over_position] + new_parents[0][cross_over_position:],
-            ]
-            current_solution_pool = new_parents + crossovers
-            for t in range(0, num_mutation):
-                mutation = deepcopy(new_parents[0])
-                for l in range(len(mutation)):
-                    idx = solution_space[l].index(mutation[l])
-                    nex_idx = idx + np.random.randint(-mutation_range,mutation_range)
-                    try:
-                        mutation[l] = solution_space[l][nex_idx]
-                    except IndexError:
-                        mutation[l] = solution_space[l][-1]
+        initial_population = []
+        sol_per_pop = 20
+        for _ in range(sol_per_pop):
+            new_solution = [np.random.choice(space) for space in solution_space]
+            initial_population.append(new_solution)
+        #print(initial_population)
 
-                current_solution_pool.append(mutation)
-            print(current_solution_pool)
-            if mutation_range > 20:
-                mutation_range = mutation_range - 10
-            else:
-                mutation_range = 20
+        num_generations = 100  # 세대 수
+        num_parents_mating = 10  # 각 세대에서 선택할 부모 수
+        import pygad
+        ga_instance = pygad.GA(num_generations=num_generations,
+                               num_parents_mating=num_parents_mating,
+                               fitness_func=fitness_func,
+                               sol_per_pop=sol_per_pop,
+                               num_genes=num_genes,
+                               initial_population=initial_population)
 
-
+        # 최적화 실행
+        ga_instance.run()
 
 
 

@@ -21,6 +21,7 @@ class Policy:
 
         if self.rule == 'rule2':
             actions = list()
+            #print(target_distance_list)
             if air_alert == True:
 
                 #print(self.temperature1, target_distance_list[0], softmax(target_distance_list[0], temperature = self.temperature1))
@@ -39,7 +40,10 @@ class Policy:
                     actions.append(np.random.choice(avail_actions_index, p = softmax(target_distance_list[idx], temperature = self.temperature2, debug = True)))
         if self.rule == 'rule3':
             actions = list()
-            target_distance_list = [[d if d**0.5 <open_fire_distance else 1000000 for d in target_distance_list[0] ]]
+
+            target_distance_list = [[d if d < open_fire_distance or
+                                          target_distance_list[0].index(d) == 0
+                                     else 1000000 for d in target_distance_list[0] ]]
             #print(target_distance_list)
             if air_alert == True:
 
