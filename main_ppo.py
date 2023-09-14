@@ -251,8 +251,8 @@ if __name__ == "__main__":
             non_lose_ratio_list.append(non_lose_ratio)
             df = pd.DataFrame(non_lose_ratio_list)
             df_reward = pd.DataFrame(reward_list)
-            df.to_csv("non_lose_ratio.csv")
-            df_reward.to_csv("episode_reward.csv")
+            df.to_csv(output_dir+"non_lose_ratio.csv")
+            df_reward.to_csv(output_dir+"episode_reward.csv")
 
         env = modeler(data,
                       visualize=visualize,
