@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import scipy.interpolate as interpolate
 import matplotlib.pyplot as plt
-
+import copy
 
 class Adapter:
     def __init__(self, input_path, mode = 'excel', polar_chart=[33, 29, 25, 33, 30, 30, 55, 27, 27, 35, 25, 30, 50], polar_chart_visualize = True):
@@ -115,14 +115,15 @@ class Adapter:
         return ship_dict, SAM_dict, SSM_dict, patrol_aircraft_dict, inception_dict
 
     def interpolating_rcs(self, polar_chart_visualize):
-        print(self.polar_chart)
-        for i in range(len(self.polar_chart) - 1, 0, -1):
-            self.polar_chart.append(self.polar_chart[i])
+        polar_chart = copy.deepcopy(self.polar_chart)
+
+        for i in range(len(polar_chart) - 1, 0, -1):
+            polar_chart.append(polar_chart[i])
         x = list()
-        for n in range(0, len(self.polar_chart)):
-            x.append(2 * np.pi * n / len(self.polar_chart))
+        for n in range(0, len(polar_chart)):
+            x.append(2 * np.pi * n / len(polar_chart))
         x = np.array(x)
-        y = np.array(self.polar_chart)
+        y = np.array(polar_chart)
         t, c, k = interpolate.splrep(x, y, s=0, k=3)
         N = 100
         xmin, xmax = x.min(), x.max()

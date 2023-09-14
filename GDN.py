@@ -579,7 +579,6 @@ class Agent:
         self.n_representation_enemy = n_representation_enemy
 
         self.action_size = action_size
-
         self.dummy_action = torch.tensor([[i for i in range(action_size)] for _ in range(batch_size)]).to(device)
         self.dropout = dropout
         self.gamma = gamma
@@ -723,7 +722,6 @@ class Agent:
 
         self.dummy_node = [
                           [[0]*feature_size_missile for _ in range(i)]
-
                             for i in range(n_node_feature_missile)]
 
 
@@ -1041,9 +1039,10 @@ class Agent:
         # node_embedding_action = self.node_representation_action_feature(action_feature)
 
         #print(action_feature.shape, node_representation_graph[1:self.action_size+1, :].shape)
-
+        #print(node_representation_graph.shape)
         node_embedding_action = node_representation_graph[0:self.action_size, :]
         obs_n_action = torch.cat([node_representation.expand(node_embedding_action.shape[0],node_representation.shape[1]),node_embedding_action], dim = 1)
+
         mask = torch.tensor(avail_action, device=device).bool()
         "Dueling Q값을 계산하는 부분"
         cos, taus = self.Q.calc_cos(1)
@@ -1151,6 +1150,7 @@ class Agent:
         td_target = discounted_n_step_bootstrapping.sum(dim=1, keepdims = True)
         delta = (td_target - q_tot).detach().tolist()
         self.buffer.update_transition_priority(batch_index = batch_index, delta = delta)
+        print(q_tot)
         loss = F.huber_loss(weight * q_tot, weight * td_target)
         #print("전",  torch.cuda.memory_reserved()/1e-9)
         del node_features_missile, \

@@ -1419,7 +1419,8 @@ class Ship:
         estimated_y = noise_y + target.v_y*time_to_intersection #self.position_y + 300*math.sin(theta)#((target.position_x-self.position_y)-(target.position_y*(-target.v_y/target.v_x)-self.position_y*1/math.tan(-theta)))/(1/math.tan(-theta)-(-target.v_y/target.v_x))
         return estimated_x, estimated_y
     def target_allot_by_action_feature(self, action_feature):
-        #print(action_feature)
+
+
         if action_feature == [0,0,0,0,0,0,0,0]:
             target_id = 0
         else:#
@@ -1429,6 +1430,7 @@ class Ship:
             for tar in self.ssm_detections:
                 if action_feature == tar.last_action_feature:
                     target_id = self.ssm_detections.index(tar) + 1 + self.surface_tracking_limit
+
         if target_id == 0:
             target = None
         if (target_id >= 1) and (target_id <= self.surface_tracking_limit):  # 대함표적에 대한 prelaunching process logic
