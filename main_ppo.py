@@ -246,6 +246,8 @@ if __name__ == "__main__":
                 if win_tag != 'lose':
                     non_lose_ratio += 1/n_eval
                 print(episode_reward, win_tag)
+            if vessl_on == True:
+                vessl.log(step=e, payload={'non_lose_ratio': non_lose_ratio})
             non_lose_ratio_list.append(non_lose_ratio)
             df = pd.DataFrame(non_lose_ratio_list)
             df_reward = pd.DataFrame(reward_list)
@@ -261,6 +263,8 @@ if __name__ == "__main__":
                       ciws_threshold=ciws_threshold,
                       action_history_step=cfg.action_history_step)
         episode_reward, win_tag, t = train(agent, env, t)
+        if e % 100 == 0:
+            agent.save_network(output_dir)
         reward_list.append(episode_reward)
         print( "Total reward in episode {} = {}, time_step : {}, win_tag : {}, terminal_time : {}".format(e,np.round(episode_reward, 3), t, win_tag, env.now))
 

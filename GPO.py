@@ -350,8 +350,18 @@ class Agent:
         return avg_loss / self.K_epoch
 
     def save_network(self, e, file_dir):
+
+        # self.eval_params = list(self.network.parameters()) + \
+        #                    list(self.node_representation_ship_feature.parameters()) + \
+        #                    list(self.func_meta_path.parameters()) + \
+        #                    list(self.func_meta_path2.parameters())
+
+
         torch.save({"episode": e,
-                    "model_state_dict": self.network.state_dict(),
+                    "network": self.network.state_dict(),
+                    "node_representation_ship_feature": self.node_representation_ship_feature.state_dict(),
+                    "func_meta_path": self.func_meta_path.state_dict(),
+                    "func_meta_path2": self.func_meta_path2.state_dict(),
                     "optimizer_state_dict": self.optimizer.state_dict()},
                    file_dir + "episode%d.pt" % e)
 
