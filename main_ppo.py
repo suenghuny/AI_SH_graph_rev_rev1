@@ -264,7 +264,7 @@ if __name__ == "__main__":
                       action_history_step=cfg.action_history_step)
         episode_reward, win_tag, t = train(agent, env, t)
         if e % 100 == 0:
-            agent.save_network(output_dir)
+            agent.save_network(e, output_dir)
         reward_list.append(episode_reward)
         print( "Total reward in episode {} = {}, time_step : {}, win_tag : {}, terminal_time : {}".format(e,np.round(episode_reward, 3), t, win_tag, env.now))
 
