@@ -216,12 +216,12 @@ if __name__ == "__main__":
                  n_representation_missile = cfg.n_representation_missile,
                  n_representation_action = cfg.n_representation_action,
 
-                 learning_rate=1e-4,
-                 learning_rate_critic=1e-3,
-                 gamma=0.98,
-                 lmbda=0.95,
+                 learning_rate=cfg.lr,
+                 learning_rate_critic=cfg.lr_critic,
+                 gamma=cfg.gamma,
+                 lmbda=cfg.lmbda,
                  eps_clip = cfg.eps_clip,
-                 K_epoch = 1,
+                 K_epoch = cfg.K_epoch,
                  layers=list(eval(cfg.ppo_layers))
                  )
 
