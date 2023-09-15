@@ -267,4 +267,3 @@ if __name__ == "__main__":
             agent.save_network(e, output_dir)
         reward_list.append(episode_reward)
         print( "Total reward in episode {} = {}, time_step : {}, win_tag : {}, terminal_time : {}".format(e,np.round(episode_reward, 3), t, win_tag, env.now))
-
