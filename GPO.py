@@ -333,8 +333,11 @@ class Agent:
             ratio = torch.exp(torch.log(pi_a) - torch.log(prob))  # a/b == exp(log(a)-log(b))
             surr1 = ratio * advantage
             surr2 = torch.clamp(ratio, 1 - self.eps_clip, 1 + self.eps_clip) * advantage
-            entropy = -torch.sum(torch.exp(pi) * pi, dim=1)
-            loss = - torch.min(surr1, surr2) + 0.5 * F.smooth_l1_loss(v_s, td_target.detach()) -0.01*entropy.mean()# 수정 + 엔트로피
+            if cfg.entropy == True:
+                entropy = -torch.sum(torch.exp(pi) * pi, dim=1)
+                loss = - torch.min(surr1, surr2) + 0.5 * F.smooth_l1_loss(v_s, td_target.detach()) -0.01*entropy.mean()# 수정 + 엔트로피
+            else:
+                loss = - torch.min(surr1, surr2) + 0.5 * F.smooth_l1_loss(v_s, td_target.detach())
 
             #print(-torch.sum(torch.exp(pi) * pi, dim=1))
 
