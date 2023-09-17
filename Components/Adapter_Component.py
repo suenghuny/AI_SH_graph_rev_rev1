@@ -13,28 +13,40 @@ class Adapter:
 
     def preprocessing(self, input_path):
         if self.mode != 'txt':
-            print(input_path)
+
             ship_data = pd.read_excel(input_path, sheet_name='ship')
             ship_data = ship_data.set_index('id')
+            ship_data = ship_data.transpose()
             ship_dict = ship_data.to_dict(orient='index')
+
+            for key,value in ship_dict.items():
+                value['number'] = key
+
+
+
 
             inception_data = pd.read_excel(input_path, sheet_name='inception')
             inception_data = inception_data.set_index('parameter')
-            inception_dict = inception_data.to_dict(orient='index')
+            inception_data = inception_data.transpose()
+            inception_dict = inception_data.to_dict(orient='index')['number']
 
 
 
             SAM_data = pd.read_excel(input_path, sheet_name='SAM')
             SAM_data = SAM_data.set_index('type')
+            SAM_data = SAM_data.transpose()
             SAM_dict = SAM_data.to_dict(orient='index')
 
             SSM_data = pd.read_excel(input_path, sheet_name='SSM')
             SSM_data = SSM_data.set_index('type')
+            SSM_data = SSM_data.transpose()
             SSM_dict = SSM_data.to_dict(orient='index')
 
             patrol_aircraft_data = pd.read_excel(input_path, sheet_name='patrol_aircraft')
             patrol_aircraft_data = patrol_aircraft_data.set_index('id')
+            patrol_aircraft_data = patrol_aircraft_data.transpose()
             patrol_aircraft_dict = patrol_aircraft_data.to_dict(orient='index')
+
 
         else:
             ship_data = pd.read_csv(input_path[0], delimiter='\s+', index_col=False)
@@ -57,6 +69,7 @@ class Adapter:
             for key in list(ship_dict.keys()):
                 name = int(key)
                 ship_dict[name] = ship_dict.pop(key)
+
 
 
             patrol_aircraft_data = pd.read_csv(input_path[1], delimiter='\s+', index_col=False)
@@ -112,6 +125,7 @@ class Adapter:
 
 
             inception_dict = inception_data.to_dict(orient='index')['number']
+
 
         return ship_dict, SAM_dict, SSM_dict, patrol_aircraft_dict, inception_dict
 

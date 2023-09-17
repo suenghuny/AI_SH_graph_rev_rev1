@@ -5,6 +5,7 @@ from collections import OrderedDict
 from GDN import NodeEmbedding
 import torch
 import torch.optim as optim
+from torch.optim.lr_scheduler import StepLR
 from GAT.model import GAT
 from GAT.layers import device
 from cfg import get_cfg
@@ -122,6 +123,8 @@ class Agent:
 
 
         self.optimizer = optim.Adam(self.eval_params, lr=learning_rate)
+        self.scheduler = StepLR(optimizer=self.optimizer, step_size=cfg.scheduler_step, gamma=cfg.scheduler_ratio)
+
         self.dummy_node = [[[0] * feature_size_missile for _ in range(i)] for i in range(n_node_feature_missile)]
 
 
