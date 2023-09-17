@@ -351,6 +351,7 @@ class Agent:
             torch.nn.utils.clip_grad_norm_(self.eval_params, cfg.grad_clip)
             self.optimizer.step()
             self.scheduler.step()
+            print(self.scheduler.get_last_lr()[0])
 
             #avg_loss += loss.mean().item()
 
