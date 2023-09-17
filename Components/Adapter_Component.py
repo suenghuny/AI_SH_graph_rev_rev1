@@ -13,9 +13,12 @@ class Adapter:
 
     def preprocessing(self, input_path):
         if self.mode != 'txt':
-            ship_data = pd.read_excel(input_path, sheet_name='ship')
+            ship_data = pd.read_csv(input_path[0])
             ship_data = ship_data.set_index('id')
             ship_dict = ship_data.to_dict(orient='index')
+
+            patrol_aircraft_data = pd.read_csv(input_path[1], delimiter='\s+', index_col=False)
+
 
 
             SAM_data = pd.read_excel(input_path, sheet_name='SAM')
