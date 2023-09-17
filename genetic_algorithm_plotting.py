@@ -77,7 +77,7 @@ def preprocessing(scenarios):
                       "Data/Test/dataset{}/SSM.txt".format(scenario),
                       "Data/Test/dataset{}/inception.txt".format(scenario)]
     else:
-        input_path = "Data\input_data.xlsx"
+        input_path = "Data/Test/dataset{}/input_data.xlsx".format(scenario)
 
     data = Adapter(input_path=input_path,
                    mode=mode,
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     환경 시스템 관련 변수들
     """
 
-    mode = 'txt'
+    mode = 'excel'
     vessl_on = False
     polar_chart_visualize = False
     polar_chart_scenario1 = [33, 29, 25, 33, 30, 30, 55, 27, 27, 35, 25, 30, 40]  # RCS의 polarchart 적용
