@@ -5,7 +5,6 @@ from collections import deque
 from cfg import get_cfg
 from GPO import Agent
 import numpy as np
-stepLR
 
 from scipy.stats import randint
 

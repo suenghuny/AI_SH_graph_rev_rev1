@@ -350,6 +350,7 @@ class Agent:
             loss.mean().backward()
             torch.nn.utils.clip_grad_norm_(self.eval_params, cfg.grad_clip)
             self.optimizer.step()
+            self.scheduler.step()
 
             #avg_loss += loss.mean().item()
 
