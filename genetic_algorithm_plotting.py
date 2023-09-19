@@ -243,7 +243,7 @@ if __name__ == "__main__":
         best_solution_records[dataset] = empty_dict
         df_fit = pd.DataFrame(fit_records)
         df_fit.to_csv('fitness_records_dataset{}.csv'.format(dataset))
-        df_best = pd.DataFrame(best_solutions)
+        df_best = pd.DataFrame(best_solution_records)
         df_best.to_csv('best_solutions.csv')
         fit_records = []
 

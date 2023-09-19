@@ -358,13 +358,6 @@ class Agent:
         return avg_loss / self.K_epoch
 
     def save_network(self, e, file_dir):
-
-        # self.eval_params = list(self.network.parameters()) + \
-        #                    list(self.node_representation_ship_feature.parameters()) + \
-        #                    list(self.func_meta_path.parameters()) + \
-        #                    list(self.func_meta_path2.parameters())
-
-
         torch.save({"episode": e,
                     "network": self.network.state_dict(),
                     "node_representation_ship_feature": self.node_representation_ship_feature.state_dict(),
@@ -373,6 +366,21 @@ class Agent:
                     "optimizer_state_dict": self.optimizer.state_dict()},
                    file_dir + "episode%d.pt" % e)
 
+    def load_network(self, file_dir):
+        print(file_dir)
+        checkpoint = torch.load(file_dir)
+        self.network.load_state_dict(checkpoint["network"])
+        self.node_representation_ship_feature.load_state_dict(checkpoint["node_representation_ship_feature"])
+        self.func_meta_path.load_state_dict(checkpoint["func_meta_path"])
+        self.func_meta_path2.load_state_dict(checkpoint["func_meta_path2"])
+
+
+
+        # self.Q_tar.load_state_dict(checkpoint["Q_tar"])
+        # self.node_representation_ship_feature.load_state_dict(checkpoint["node_representation_ship_feature"])
+        # self.func_meta_path.load_state_dict(checkpoint["func_meta_path"])
+        # self.func_meta_path2.load_state_dict(checkpoint["func_meta_path2"])
+        # self.DuelingQ.load_state_dict(checkpoint["dueling_Q"])
 
 
 # action_encoding = np.eye(action_size, dtype = np.float)
