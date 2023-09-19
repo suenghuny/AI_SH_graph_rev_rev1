@@ -4,6 +4,8 @@ from Components.Policy import *
 from cfg import get_cfg
 import numpy as np
 
+fit_records = []
+best_solutions = dict()
 def on_start(ga_instance):
     print("on_start()")
 
@@ -20,11 +22,10 @@ def on_mutation(ga_instance, offspring_mutation):
     print("on_mutation()")
 
 def on_generation(ga_instance):
+
     print("Generation = {generation}".format(generation=ga_instance.generations_completed))
     print("Fitness    = {fitness}".format(fitness=ga_instance.best_solution()[1]))
-
-
-
+    fit_records.append(ga_instance.best_solution()[1])
 
 def on_stop(ga_instance, last_population_fitness):
     print("on_stop()")
@@ -161,14 +162,13 @@ if __name__ == "__main__":
     vessl_on = False
     polar_chart_visualize = False
     polar_chart_scenario1 = [33, 29, 25, 33, 30, 30, 55, 27, 27, 35, 25, 30, 40]  # RCS의 polarchart 적용
-
+    best_solution_records = dict()
     polar_chart = [polar_chart_scenario1]
     df_dict = {}
     episode_polar_chart = polar_chart[0]
-    datasets = [i for i in range(1, 15)]
+    datasets = [i for i in range(1, 29)]
     for dataset in datasets:
         fitness_history = []
-
         data = preprocessing(dataset)
         visualize = False  # 가시화 기능 사용 여부 / True : 가시화 적용, False : 가시화 미적용
         size = [600, 600]  # 화면 size / 600, 600 pixel
@@ -195,17 +195,17 @@ if __name__ == "__main__":
         for _ in range(sol_per_pop):
             new_solution = [np.random.choice(space) for space in solution_space]
             initial_population.append(new_solution)
-        #print(initial_population)
 
         num_generations = 15 # 세대 수
         num_parents_mating = 6  # 각 세대에서 선택할 부모 수
         init_range_low = 0
         init_range_high = 20
         parent_selection_type = "sss"
-        keep_parents = 1
+        keep_parents = 2
         crossover_type = "single_point"
         mutation_type = "random"
         mutation_percent_genes = 10
+
 
         import pygad
         ga_instance = pygad.GA(num_generations=num_generations,
@@ -233,8 +233,19 @@ if __name__ == "__main__":
         ga_instance.run()
         fitness = ga_instance.best_solution()[1]
         best_solutions = ga_instance.best_solution()[0]
-        fitness_history = ga_instance.plot_fitness()
+        #fitness_history = ga_instance.plot_fitness()
 
+
+        empty_dict = dict()
+        for i in range(len(best_solutions)):
+            empty_dict[i] = best_solutions[i]
+
+        best_solution_records[dataset] = empty_dict
+        df_fit = pd.DataFrame(fit_records)
+        df_fit.to_csv('fitness_records_dataset{}.csv'.format(dataset))
+        df_best = pd.DataFrame(best_solutions)
+        df_best.to_csv('best_solutions.csv')
+        fit_records = []
 
         print("최적해:", best_solutions)
         print("최적해의 적합도:", fitness)

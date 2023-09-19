@@ -40,10 +40,21 @@ class Policy:
                     actions.append(np.random.choice(avail_actions_index, p = softmax(target_distance_list[idx], temperature = self.temperature2, debug = True)))
         if self.rule == 'rule3':
             actions = list()
+            len_target_distance_list = len(target_distance_list)
+            temp = []
+            for l in range(len_target_distance_list):
+                target_distances = list()
+                for d in target_distance_list[l]:
+                    if d < open_fire_distance or target_distance_list[l].index(d) == 0:
+                        d = d
+                    else:
+                        d = 1000000
+                    target_distances.append(d)
+                temp.append(target_distances)
+            target_distance_list = temp
 
-            target_distance_list = [[d if d < open_fire_distance or
-                                          target_distance_list[0].index(d) == 0
-                                     else 1000000 for d in target_distance_list[0] ]]
+            # [d if d < open_fire_distance or target_distance_list[0].index(d) == 0
+            #  else 1000000 for d in target_distance_list[0]]
             #print(target_distance_list)
             if air_alert == True:
 

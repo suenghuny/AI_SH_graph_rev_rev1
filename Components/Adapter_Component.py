@@ -13,14 +13,25 @@ class Adapter:
 
     def preprocessing(self, input_path):
         if self.mode != 'txt':
-
             ship_data = pd.read_excel(input_path, sheet_name='ship')
             ship_data = ship_data.set_index('id')
             ship_data = ship_data.transpose()
             ship_dict = ship_data.to_dict(orient='index')
-
+            num_enemy = 0
+            num_blue = 0
             for key,value in ship_dict.items():
                 value['number'] = key
+                if value['side'] == 'yellow':
+                    num_enemy += 1
+                else:
+                    num_blue += 1
+            for key,value in ship_dict.items():
+                value['number'] = key
+                if value['side'] == 'yellow':
+                    value['surface_tracking_limit'] = num_blue
+                else:
+                    value['surface_tracking_limit'] = num_enemy
+
 
 
 
