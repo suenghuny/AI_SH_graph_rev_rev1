@@ -276,9 +276,9 @@ class Agent:
         logit = torch.cat([logit, remain_action], dim=1)
         #print(logit.shape, remain_action.shape)
         mask = torch.tensor(possible_actions, device=device).bool()
-        #print(logit.shape, mask.shape)
         logit = logit.masked_fill(mask == 0, -1e8)
         prob = torch.softmax(logit, dim=-1)
+
         m = Categorical(prob)
         a = m.sample().item()
 

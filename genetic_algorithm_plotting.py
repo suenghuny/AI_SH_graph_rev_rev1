@@ -2,6 +2,7 @@ from Components.Modeler_Component_test import *
 from Components.Adapter_Component import *
 from Components.Policy import *
 from cfg import get_cfg
+
 import numpy as np
 
 fit_records = []
@@ -31,7 +32,7 @@ def on_stop(ga_instance, last_population_fitness):
     print("on_stop()")
 
 
-def simulation(solution):
+def simulation(solution, ga = True):
     temperature1 = solution[0]
     interval_constant_blue1 = solution[1]
     temperature2 = solution[2]
@@ -39,10 +40,19 @@ def simulation(solution):
     air_alert_distance = solution[4]
     warning_distance = solution[5]
     score = 0
-    n = 100
-    seed = 4
-    np.random.seed(seed)
-    random.seed(seed)
+
+    if ga == False:
+        seed = cfg.seed
+        np.random.seed(seed)
+        random.seed(seed)
+        n = cfg.n_test
+        print("=========평가시작===========")
+    else:
+        seed=cfg.seed+220202
+        np.random.seed(seed)
+        random.seed(seed)
+        n = cfg.n_eval_GA
+
     for e in range(n):
         env = modeler(data,
                       visualize=visualize,
@@ -167,6 +177,7 @@ if __name__ == "__main__":
     df_dict = {}
     episode_polar_chart = polar_chart[0]
     datasets = [i for i in range(1, 29)]
+    non_lose_ratio_list = []
     for dataset in datasets:
         fitness_history = []
         data = preprocessing(dataset)
@@ -185,18 +196,18 @@ if __name__ == "__main__":
         df_dict = {}
         records = list()
 
-        solution_space = [[i for i in range(0, 20)], [i  for i in range(0, 50)],
-                          [i  for i in range(0, 20)], [i  for i in range(0, 50)], [i for i in range(0,200)],
-                          [i for i in range(0,300)]]
+        solution_space = [[i/10 for i in range(0, 200)], [i/10  for i in range(0, 500)],
+                          [i/10  for i in range(0, 200)], [i/10  for i in range(0, 500)], [i/10 for i in range(0,2000)],
+                          [i/10 for i in range(0,3000)]]
         num_genes = len(solution_space)
 
         initial_population = []
-        sol_per_pop = 8
+        sol_per_pop =8
         for _ in range(sol_per_pop):
             new_solution = [np.random.choice(space) for space in solution_space]
             initial_population.append(new_solution)
 
-        num_generations = 15 # 세대 수
+        num_generations = 12 # 세대 수
         num_parents_mating = 6  # 각 세대에서 선택할 부모 수
         init_range_low = 0
         init_range_high = 20
@@ -204,9 +215,7 @@ if __name__ == "__main__":
         keep_parents = 2
         crossover_type = "single_point"
         mutation_type = "random"
-        mutation_percent_genes = 10
-
-
+        mutation_percent_genes = 30
         import pygad
         ga_instance = pygad.GA(num_generations=num_generations,
                                num_parents_mating=num_parents_mating,
@@ -242,13 +251,17 @@ if __name__ == "__main__":
 
         best_solution_records[dataset] = empty_dict
         df_fit = pd.DataFrame(fit_records)
-        df_fit.to_csv('fitness_records_dataset{}.csv'.format(dataset))
-        df_best = pd.DataFrame(best_solution_records)
-        df_best.to_csv('best_solutions.csv')
+        df_fit.to_csv('fitness_records_dataset_param2{}.csv'.format(dataset))
+
         fit_records = []
 
         print("최적해:", best_solutions)
         print("최적해의 적합도:", fitness)
+        score = simulation(best_solutions, ga = False)
+        non_lose_ratio_list.append(score)
+        df_result = pd.DataFrame(non_lose_ratio_list)
+        df_result.to_csv("GA_result_param2.csv")
+
 
 
 

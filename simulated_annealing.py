@@ -3,7 +3,7 @@ from Components.Adapter_Component import *
 from Components.Policy import *
 from cfg import get_cfg
 import numpy as np
-from scipy.optimize import minimize
+from scipy.optimize import dual_annealing
 
 
 from simanneal import Annealer

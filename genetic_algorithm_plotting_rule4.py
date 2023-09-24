@@ -2,6 +2,7 @@ from Components.Modeler_Component_test import *
 from Components.Adapter_Component import *
 from Components.Policy import *
 from cfg import get_cfg
+
 import numpy as np
 
 fit_records = []
@@ -31,18 +32,26 @@ def on_stop(ga_instance, last_population_fitness):
     print("on_stop()")
 
 
-def simulation(solution):
+def simulation(solution, ga = True):
     temperature1 = solution[0]
     interval_constant_blue1 = solution[1]
     temperature2 = solution[2]
     interval_constant_blue2 = solution[3]
     air_alert_distance = solution[4]
-    warning_distance = solution[5]
     score = 0
-    n = 100
-    seed = 4
-    np.random.seed(seed)
-    random.seed(seed)
+
+    if ga == False:
+        seed = cfg.seed
+        np.random.seed(seed)
+        random.seed(seed)
+        n = cfg.n_test
+        print("=========평가시작===========")
+    else:
+        seed=cfg.seed+220202
+        np.random.seed(seed)
+        random.seed(seed)
+        n = cfg.n_eval_GA
+
     for e in range(n):
         env = modeler(data,
                       visualize=visualize,
@@ -55,7 +64,7 @@ def simulation(solution):
                       air_alert_distance_blue=  air_alert_distance,
                       interval_constant_blue = [interval_constant_blue1, interval_constant_blue2]
                       )
-        epi_reward, eval, win_tag= evaluation(env, temperature1=temperature1,temperature2 = temperature2,warning_distance=warning_distance)
+        epi_reward, eval, win_tag= evaluation(env, temperature1=temperature1,temperature2 = temperature2)
         if win_tag != 'lose':
             score += 1/n
         else:
@@ -89,11 +98,10 @@ def preprocessing(scenarios):
 
 def evaluation(env,
                temperature1,
-               temperature2,
-               warning_distance
+               temperature2
                ):
     temp = random.uniform(0, 50)
-    agent_blue = Policy(env, rule='rule3', temperatures=[temperature1, temperature2])
+    agent_blue = Policy(env, rule='rule2', temperatures=[temperature1, temperature2])
     agent_yellow = Policy(env, rule='rule2', temperatures=[temp, temp])
     done = False
     episode_reward = 0
@@ -106,10 +114,10 @@ def evaluation(env,
 
     while not done:
         if env.now % (decision_timestep) <= 0.00001:
-            avail_action_blue, target_distance_blue, air_alert_blue = env.get_avail_actions_temp(side='blue')
+            avail_action_blue, target_distance_blue, air_alert_blue = env.get_avail_actions_temp(side='blue', speed_normalizing_blue=False)
             avail_action_yellow, target_distance_yellow, air_alert_yellow = env.get_avail_actions_temp(side='yellow')
 
-            action_blue = agent_blue.get_action(avail_action_blue, target_distance_blue, air_alert_blue, open_fire_distance = warning_distance)
+            action_blue = agent_blue.get_action(avail_action_blue, target_distance_blue, air_alert_blue)
             action_yellow = agent_yellow.get_action(avail_action_yellow, target_distance_yellow, air_alert_yellow)
             reward, win_tag, done, leaker = env.step(action_blue, action_yellow, rl = False)
             episode_reward += reward
@@ -166,6 +174,7 @@ if __name__ == "__main__":
     df_dict = {}
     episode_polar_chart = polar_chart[0]
     datasets = [i for i in range(1, 29)]
+    non_lose_ratio_list = []
     for dataset in datasets:
         fitness_history = []
         data = preprocessing(dataset)
@@ -184,9 +193,74 @@ if __name__ == "__main__":
         df_dict = {}
         records = list()
 
-        solution_space = [[i for i in range(0, 20)], [i  for i in range(0, 50)],
-                          [i  for i in range(0, 20)], [i  for i in range(0, 50)], [i for i in range(0,200)],
-                          [i for i in range(0,300)]]
+        solution_space = [[i/10 for i in range(0, 200)], [i/10  for i in range(0, 500)],
+                          [i/10  for i in range(0, 200)], [i/10  for i in range(0, 500)], [i/10 for i in range(0,2000)]
+                          ]
         num_genes = len(solution_space)
+
+        initial_population = []
+        sol_per_pop =20
+        for _ in range(sol_per_pop):
+            new_solution = [np.random.choice(space) for space in solution_space]
+            initial_population.append(new_solution)
+
+        num_generations = 12 # 세대 수
+        num_parents_mating = 6  # 각 세대에서 선택할 부모 수
+        init_range_low = 0
+        init_range_high = 20
+        parent_selection_type = "sss"
+        keep_parents = 2
+        crossover_type = "single_point"
+        mutation_type = "random"
+        mutation_percent_genes = 30
+
+
+        import pygad
+        ga_instance = pygad.GA(num_generations=num_generations,
+                               num_parents_mating=num_parents_mating,
+                               fitness_func=fitness_func,
+                               sol_per_pop=sol_per_pop,
+                               num_genes=num_genes,
+                                parent_selection_type = parent_selection_type,
+                                keep_parents = keep_parents,
+                               initial_population=initial_population,
+                               gene_space = solution_space,
+                               crossover_type = crossover_type,
+                               mutation_type = mutation_type,
+                               mutation_percent_genes = mutation_percent_genes,
+                               on_start=on_start,
+                               on_fitness=on_fitness,
+                               on_parents=on_parents,
+                               on_crossover=on_crossover,
+                               on_mutation=on_mutation,
+                               on_generation=on_generation,
+                               on_stop=on_stop
+                               )
+
+        # 최적화 실행
+        ga_instance.run()
+        fitness = ga_instance.best_solution()[1]
+        best_solutions = ga_instance.best_solution()[0]
+        #fitness_history = ga_instance.plot_fitness()
+
+
+        empty_dict = dict()
+        for i in range(len(best_solutions)):
+            empty_dict[i] = best_solutions[i]
+
+        best_solution_records[dataset] = empty_dict
+        df_fit = pd.DataFrame(fit_records)
+        df_fit.to_csv('fitness_records_dataset{}_rule4_param2.csv'.format(dataset))
+
+        fit_records = []
+
+        print("최적해:", best_solutions)
+        print("최적해의 적합도:", fitness)
+        score = simulation(best_solutions, ga = False)
+        non_lose_ratio_list.append(score)
+        df_result = pd.DataFrame(non_lose_ratio_list)
+        df_result.to_csv("GA_result_rule4_param2.csv")
+
+
 
 

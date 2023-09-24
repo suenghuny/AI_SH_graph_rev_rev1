@@ -1,4 +1,4 @@
-from Components.Modeler_Component import *
+from Components.Modeler_Component_test import *
 from Components.Adapter_Component import *
 from Components.Policy import *
 from collections import deque
@@ -46,24 +46,42 @@ def evaluation(agent, env):
         if env.now % (decision_timestep) <= 0.00001:
             avail_action_blue, target_distance_blue, air_alert_blue = env.get_avail_actions_temp(side='blue')
             avail_action_yellow, target_distance_yellow, air_alert_yellow = env.get_avail_actions_temp(side='yellow')
-            edge_index_ssm_to_ship = env.get_ssm_to_ship_edge_index()
-            edge_index_ssm_to_ssm = env.get_ssm_to_ssm_edge_index()
-            edge_index_sam_to_ssm = env.get_sam_to_ssm_edge_index()
-            edge_index_ship_to_sam = env.get_ship_to_sam_edge_index()
-            edge_index_ship_to_enemy = env.get_ship_to_enemy_edge_index()
-            heterogeneous_edges = (edge_index_ssm_to_ship, edge_index_ssm_to_ssm, edge_index_sam_to_ssm, edge_index_ship_to_sam, edge_index_ship_to_enemy)
-            ship_feature = env.get_ship_feature()
-            missile_node_feature, node_cats = env.get_missile_node_feature()
-            action_feature = env.get_action_feature()
+            # edge_index_ssm_to_ship = env.get_ssm_to_ship_edge_index()
+            # edge_index_ssm_to_ssm = env.get_ssm_to_ssm_edge_index()
+            # edge_index_sam_to_ssm = env.get_sam_to_ssm_edge_index()
+            # edge_index_ship_to_sam = env.get_ship_to_sam_edge_index()
+            # edge_index_ship_to_enemy = env.get_ship_to_enemy_edge_index()
+            # heterogeneous_edges = (edge_index_ssm_to_ship, edge_index_ssm_to_ssm, edge_index_sam_to_ssm, edge_index_ship_to_sam, edge_index_ship_to_enemy)
+            # ship_feature = env.get_ship_feature()
+            # missile_node_feature, node_cats = env.get_missile_node_feature()
+            # action_feature = env.get_action_feature()
+            actions_blue = list()
+            for i in range(len(env.friendlies_fixed_list)):
+                edge_index_ssm_to_ship = env.get_ssm_to_ship_edge_index(k = i)
+                edge_index_ssm_to_ssm = env.get_ssm_to_ssm_edge_index(k = i)
+                edge_index_sam_to_ssm = env.get_sam_to_ssm_edge_index(k = i)
+                edge_index_ship_to_sam = env.get_ship_to_sam_edge_index(k = i)
+                edge_index_ship_to_enemy = env.get_ship_to_enemy_edge_index(k = i)
+                heterogeneous_edges = (edge_index_ssm_to_ship, edge_index_ssm_to_ssm, edge_index_sam_to_ssm, edge_index_ship_to_sam,edge_index_ship_to_enemy)
+                ship_feature = env.get_ship_feature(k = i)
+                missile_node_feature, node_cats = env.get_missile_node_feature(k = i)
+                action_feature = env.get_action_feature(k = i)
+                agent.eval_check(eval=True)
+                action_blue, prob, mask, a_index = agent.sample_action(ship_feature, missile_node_feature,
+                                                                       heterogeneous_edges, avail_action_blue[i],
+                                                                       action_feature)
+                actions_blue.append(action_blue)
 
-            agent.eval_check(eval=True)
-            action_blue, prob, mask, a_index= agent.sample_action(ship_feature, missile_node_feature,heterogeneous_edges,avail_action_blue,action_feature)
+
             action_yellow = agent_yellow.get_action(avail_action_yellow, target_distance_yellow, air_alert_yellow)
-            reward, win_tag, done, leakers = env.step(action_blue, action_yellow)
+            reward, win_tag, done, leakers = env.step(actions_blue, action_yellow)
             episode_reward += reward
         else:
             pass_transition = True
-            env.step(action_blue=[0, 0, 0, 0, 0, 0, 0, 0], action_yellow=enemy_action_for_transition,pass_transition=pass_transition)
+            actions_blue = list()
+            for i in range(len(env.friendlies_fixed_list)):
+                actions_blue.append([0, 0, 0, 0, 0, 0, 0, 0])
+            env.step(action_blue=actions_blue, action_yellow=enemy_action_for_transition,pass_transition=pass_transition)
 
     return episode_reward, win_tag
 
@@ -106,7 +124,6 @@ if __name__ == "__main__":
     simtime_per_frame = cfg.simtime_per_frame
     decision_timestep = cfg.decision_timestep
     detection_by_height = False  # 고도에 의한
-    num_iteration = cfg.num_episode  # 시뮬레이션 반복횟수
     mode = 'excel'  # 전처리 모듈 / 'excel' : input_data.xlsx 파일 적용, 'txt' "Data\ship.txt", "Data\patrol_aircraft.txt", "Data\SAM.txt", "Data\SSM.txt"를 적용
     rule = 'rule2'  # rule1 : 랜덤 정책 / rule2 : 거리를 기반 합리성에 기반한 정책(softmax policy)
     temperature = [10,
@@ -125,8 +142,11 @@ if __name__ == "__main__":
     records = list()
     import torch, random
 
-    datasets = [i for i in range(1, 29)]
+    datasets = [i for i in range(20, 29)]
+    non_lose_ratio_list = []
     for dataset in datasets:
+
+        print("====dataset{}====".format(dataset))
         fitness_history = []
         data = preprocessing(dataset)
         t = 0
@@ -160,11 +180,16 @@ if __name__ == "__main__":
                      K_epoch = cfg.K_epoch,
                      layers=list(eval(cfg.ppo_layers))
                      )
-        agent.load_network("episode2900.pt")
-
+        agent.load_network("episode2900.pt") # 2900, 1600
         reward_list = list()
-        non_lose_ratio_list = list()
-        for e in range(num_iteration):
+        n_eval = 200
+        non_lose_ratio = 0
+        non_lose_records = []
+        seed = cfg.seed
+        np.random.seed(seed)
+        random.seed(seed)
+        torch.manual_seed(seed)
+        for e in range(cfg.n_test):
             env = modeler(data,
                           visualize=visualize,
                           size=size,
@@ -175,5 +200,15 @@ if __name__ == "__main__":
                           action_history_step=cfg.action_history_step)
             episode_reward, win_tag = evaluation(agent, env)
             if win_tag != 'lose':
-                print("??")
-                #non_lose_ratio += 1/n_eval
+                non_lose_ratio += 1/cfg.n_test
+                non_lose_records.append(1)
+            else:
+                non_lose_records.append(0)
+
+
+            print(e, win_tag, np.mean(non_lose_records))
+
+        non_lose_ratio_list.append(non_lose_ratio)
+        df = pd.DataFrame(non_lose_ratio_list)
+        df.to_csv("ppo_result.csv")
+

@@ -82,4 +82,6 @@ def get_cfg():
     parser.add_argument("--optimizer", type=str, default='ADAM', help="optimizer")
     parser.add_argument("--entropy", type=bool, default=True, help="entropy")
     parser.add_argument("--seed", type=int, default=1234, help="random seed")
+    parser.add_argument("--n_test", type=int, default=200, help="number of test run")
+    parser.add_argument("--n_eval_GA", type=int, default=100, help="number of GA eval")
     return parser.parse_args()
