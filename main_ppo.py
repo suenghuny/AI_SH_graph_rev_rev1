@@ -27,7 +27,10 @@ def preprocessing(scenarios):
                           "Data/{}/SSM.txt".format(scenario),
                           "Data/{}/inception.txt".format(scenario)]
     else:
-        input_path = "Data/{}/input_data.xlsx".format(scenario)
+        if vessl_on == True:
+            input_path = "/root/AI_SH_graph_rev_rev1/Data/{}/input_data.xlsx".format(scenario)
+        else:
+            input_path = "Data/{}/input_data.xlsx".format(scenario)
 
     data = Adapter(input_path=input_path,
                    mode=mode,
