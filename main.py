@@ -12,7 +12,8 @@ from scipy.stats import randint
 
 
 def preprocessing(scenarios):
-    scenario = scenarios[0]
+    scenario = scenarios
+
     if mode == 'txt':
         if vessl_on == True:
             input_path = ["/root/AI_SH_graph_rev_rev1/Data/{}/ship.txt".format(scenario),
@@ -304,7 +305,7 @@ if __name__ == "__main__":
     decision_timestep = cfg.decision_timestep
     detection_by_height = False  # 고도에 의한
     num_iteration = cfg.num_episode  # 시뮬레이션 반복횟수
-    mode = 'txt'  # 전처리 모듈 / 'excel' : input_data.xlsx 파일 적용, 'txt' "Data\ship.txt", "Data\patrol_aircraft.txt", "Data\SAM.txt", "Data\SSM.txt"를 적용
+    mode = 'excel'  # 전처리 모듈 / 'excel' : input_data.xlsx 파일 적용, 'txt' "Data\ship.txt", "Data\patrol_aircraft.txt", "Data\SAM.txt", "Data\SSM.txt"를 적용
     rule = 'rule2'  # rule1 : 랜덤 정책 / rule2 : 거리를 기반 합리성에 기반한 정책(softmax policy)
     temperature = [10,
                    20]  # rule = 'rule2'인 경우만 적용 / 의사결정의 flexibility / 첫번째 index : 공중 위험이 낮은 상태, 두번째 index : 공중 위험이 높은 상태
@@ -322,12 +323,15 @@ if __name__ == "__main__":
     records = list()
     import torch, random
 
-    seed = 222344  # 원래 SEED 1234
+    seed = 1234
     np.random.seed(seed)
     torch.manual_seed(seed)
     random.seed(seed)
 
-    data = preprocessing(scenarios)
+    data1 = preprocessing(scenarios[0])
+    data2 = preprocessing(scenarios[1])
+    data3 = preprocessing(scenarios[2])
+    data = np.random.choice([data1, data2, data3])
     t = 0
     env = modeler(data,
                   visualize=visualize,
@@ -412,6 +416,7 @@ if __name__ == "__main__":
             non_lose_rate = 0
             leakers_rate = 0
             for j in range(n):
+                data = data[0]
                 env = modeler(data,
                               visualize=visualize,
                               size=size,
@@ -433,7 +438,7 @@ if __name__ == "__main__":
             else:
                 eval_win_ratio.append(leakers_rate)
                 eval_lose_ratio.append(non_lose_rate)
-
+        data = np.random.choice([data1, data2, data3])
         env = modeler(data,
                       visualize=visualize,
                       size=size,

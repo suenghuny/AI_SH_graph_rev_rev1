@@ -12,7 +12,7 @@ fix_l = 0
 fix_u = 17
 
 def preprocessing(scenarios):
-    scenario = scenarios[0]
+    scenario = scenarios
     if mode == 'txt':
         if vessl_on == True:
             input_path = ["/root/AI_SH_graph_rev_rev1/Data/{}/ship.txt".format(scenario),
@@ -192,6 +192,12 @@ if __name__ == "__main__":
     torch.manual_seed(seed)
     random.seed(seed)
 
+    data1 = preprocessing(scenarios[0])
+    data2 = preprocessing(scenarios[1])
+    data3 = preprocessing(scenarios[2])
+    datas = [data1, data2, data3]
+    data = np.random.choice(datas)
+
     data = preprocessing(scenarios)
     t = 0
     env = modeler(data,
@@ -234,6 +240,7 @@ if __name__ == "__main__":
             n_eval = 20
             non_lose_ratio = 0
             for _ in range(n_eval):
+                data = datas[0]
                 env = modeler(data,
                               visualize=visualize,
                               size=size,
@@ -254,6 +261,7 @@ if __name__ == "__main__":
             df.to_csv(output_dir+"non_lose_ratio.csv")
             df_reward.to_csv(output_dir+"episode_reward.csv")
 
+        data = np.random.choice(datas)
         env = modeler(data,
                       visualize=visualize,
                       size=size,
