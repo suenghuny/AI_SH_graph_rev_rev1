@@ -27,7 +27,7 @@ def preprocessing(scenarios):
                           "Data/{}/SSM.txt".format(scenario),
                           "Data/{}/inception.txt".format(scenario)]
     else:
-        input_path = "Data\input_data.xlsx"
+        input_path = "Data/{}/input_data.xlsx".format(scenario)
 
     data = Adapter(input_path=input_path,
                    mode=mode,
@@ -169,7 +169,7 @@ if __name__ == "__main__":
     decision_timestep = cfg.decision_timestep
     detection_by_height = False  # 고도에 의한
     num_iteration = cfg.num_episode  # 시뮬레이션 반복횟수
-    mode = 'txt'  # 전처리 모듈 / 'excel' : input_data.xlsx 파일 적용, 'txt' "Data\ship.txt", "Data\patrol_aircraft.txt", "Data\SAM.txt", "Data\SSM.txt"를 적용
+    mode = 'excel'  # 전처리 모듈 / 'excel' : input_data.xlsx 파일 적용, 'txt' "Data\ship.txt", "Data\patrol_aircraft.txt", "Data\SAM.txt", "Data\SSM.txt"를 적용
     rule = 'rule2'  # rule1 : 랜덤 정책 / rule2 : 거리를 기반 합리성에 기반한 정책(softmax policy)
     temperature = [10,
                    20]  # rule = 'rule2'인 경우만 적용 / 의사결정의 flexibility / 첫번째 index : 공중 위험이 낮은 상태, 두번째 index : 공중 위험이 높은 상태
@@ -198,7 +198,6 @@ if __name__ == "__main__":
     datas = [data1, data2, data3]
     data = np.random.choice(datas)
 
-    data = preprocessing(scenarios)
     t = 0
     env = modeler(data,
                   visualize=visualize,

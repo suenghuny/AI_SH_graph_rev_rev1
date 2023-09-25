@@ -21,6 +21,7 @@ class Adapter:
             num_blue = 0
             for key,value in ship_dict.items():
                 value['number'] = key
+
                 if value['side'] == 'yellow':
                     num_enemy += 1
                 else:
