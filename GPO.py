@@ -13,6 +13,7 @@ import numpy as np
 from GCRN.model import GCRN
 cfg = get_cfg()
 from torch.distributions import Categorical
+from ada_hessian import AdaHessian
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class PPONetwork(nn.Module):
@@ -121,8 +122,10 @@ class Agent:
                            list(self.func_meta_path.parameters()) + \
                            list(self.func_meta_path2.parameters())
 
-
-        self.optimizer = optim.Adam(self.eval_params, lr=learning_rate)
+        if cfg.optimizer == 'AdaHessian':
+            self.optimizer =AdaHessian(self.eval_params, lr=learning_rate)
+        else:
+            self.optimizer = optim.Adam(self.eval_params, lr=learning_rate)
         self.scheduler = StepLR(optimizer=self.optimizer, step_size=cfg.scheduler_step, gamma=cfg.scheduler_ratio)
 
         self.dummy_node = [[[0] * feature_size_missile for _ in range(i)] for i in range(n_node_feature_missile)]
@@ -347,7 +350,10 @@ class Agent:
 
 
             self.optimizer.zero_grad()
-            loss.mean().backward()
+            if type(self.optimizer) == AdaHessian:
+                loss.backward(create_graph=True)
+            else:
+                loss.backward()
             torch.nn.utils.clip_grad_norm_(self.eval_params, cfg.grad_clip)
             self.optimizer.step()
             self.scheduler.step()
