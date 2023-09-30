@@ -1267,6 +1267,13 @@ class Ship:
         " 1. 접촉한 순서대로 앞에서 부터 채운다 "
         " 2. 파괴된 표적은 접촉 리스트에서 없앤다. "
         # print("전 길이", len(self.ssm_detections))
+        dummy_detections = self.ssm_detections[:]
+        for missile in dummy_detections:
+            if cal_distance(self, missile) > self.detection_range:
+                self.ssm_detections.remove(missile)
+
+
+
         if self.side == 'blue':
             if len(self.ssm_detections) < self.air_tracking_limit:
                 for missile in self.env.flying_ssms_enemy:
