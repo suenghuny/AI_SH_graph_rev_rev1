@@ -342,7 +342,7 @@ class Agent:
             surr2 = torch.clamp(ratio, 1 - self.eps_clip, 1 + self.eps_clip) * advantage
             if cfg.entropy == True:
                 entropy = -torch.sum(torch.exp(pi) * pi, dim=1)
-                loss = - torch.min(surr1, surr2) + 0.5 * F.smooth_l1_loss(v_s, td_target.detach()) -0.01*entropy.mean()# 수정 + 엔트로피
+                loss = -1.5* torch.min(surr1, surr2) + 0.5 * F.smooth_l1_loss(v_s, td_target.detach()) -0.01*entropy.mean()# 수정 + 엔트로피
 
                 print(loss.mean().item())
                 if loss.mean().item() == float('inf') or loss.mean().item() == float('-inf'):
