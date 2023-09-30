@@ -333,7 +333,9 @@ class Agent:
             logit = logit.masked_fill(mask == 0, -1e8)
             pi = torch.softmax(logit, dim=-1)
             pi_a = pi.gather(1, a_indices)
-            ratio = torch.log(pi_a) - torch.log(prob)  # a/b == exp(log(a)-log(b))
+
+            ratio = torch.log(pi_a+0.001) - torch.log(prob+0.001)  # a/b == exp(log(a)-log(b))
+
             ratio = ratio.clamp_(max=88)
             ratio = ratio.exp()
             surr1 = ratio * advantage
@@ -341,6 +343,11 @@ class Agent:
             if cfg.entropy == True:
                 entropy = -torch.sum(torch.exp(pi) * pi, dim=1)
                 loss = - torch.min(surr1, surr2) + 0.5 * F.smooth_l1_loss(v_s, td_target.detach()) -0.01*entropy.mean()# 수정 + 엔트로피
+
+
+                if loss.mean().item() == float('inf') or loss.mean().item() == float('-inf'):
+                    print("pi_a", pi_a)
+                    print("prob", prob)
             else:
                 loss = - torch.min(surr1, surr2) + 0.5 * F.smooth_l1_loss(v_s, td_target.detach())
 
