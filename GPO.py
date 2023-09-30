@@ -343,7 +343,7 @@ class Agent:
             if cfg.entropy == True:
                 entropy = -torch.sum(torch.exp(pi) * pi, dim=1)
 
-                loss = - torch.min(surr1, surr2) + 0.25 * F.smooth_l1_loss(v_s, td_target.detach()) -0.01*entropy.mean()# 수정 + 엔트로피
+                loss = - torch.min(surr1, surr2) + 0.6 * F.smooth_l1_loss(v_s, td_target.detach()) -0.01*entropy.mean()# 수정 + 엔트로피
 
                 print(loss.mean().item())
                 if loss.mean().item() == float('inf') or loss.mean().item() == float('-inf'):
