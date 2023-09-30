@@ -93,7 +93,9 @@ def train(agent, env, t, e):
 
 
     agent.eval_check(eval=False)
-    agent.learn(e = e)
+    loss = agent.learn(e = e)
+    if vessl_on == True:
+        vessl.log(step=e, payload={'loss': loss})
     return episode_reward, win_tag, t
 
 

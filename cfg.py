@@ -84,4 +84,7 @@ def get_cfg():
     parser.add_argument("--seed", type=int, default=1234, help="random seed")
     parser.add_argument("--n_test", type=int, default=200, help="number of test run")
     parser.add_argument("--n_eval_GA", type=int, default=20, help="number of GA eval")
+
+    parser.add_argument("--bonus_reward", type=int, default=20, help="bonus reward")
+    parser.add_argument("--loss_weight", type=float, default=0.5, help="loss_weight_value")
     return parser.parse_args()
