@@ -123,8 +123,8 @@ class Environment:
                     initial_position_x = 50
                     initial_position_y = 50
                 else:
-                    initial_position_x = 50+300
-                    initial_position_y = 50+40
+                    initial_position_x = 50+400
+                    initial_position_y = 50+70
             else:
                 if mode == True:
                     speed = 25
