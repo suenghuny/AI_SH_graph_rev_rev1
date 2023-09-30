@@ -333,7 +333,9 @@ class Agent:
             logit = logit.masked_fill(mask == 0, -1e8)
             pi = torch.softmax(logit, dim=-1)
             pi_a = pi.gather(1, a_indices)
-            ratio = torch.exp(torch.log(pi_a) - torch.log(prob))  # a/b == exp(log(a)-log(b))
+            ratio = torch.log(pi_a) - torch.log(prob)  # a/b == exp(log(a)-log(b))
+            ratio = ratio.clamp_(max=88)
+            ratio = ratio.exp()
             surr1 = ratio * advantage
             surr2 = torch.clamp(ratio, 1 - self.eps_clip, 1 + self.eps_clip) * advantage
             if cfg.entropy == True:
