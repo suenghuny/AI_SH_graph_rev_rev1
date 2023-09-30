@@ -142,7 +142,7 @@ if __name__ == "__main__":
     records = list()
     import torch, random
 
-    datasets = [i for i in range(1, 29)]
+    datasets = [i for i in range(17, 29)]
     non_lose_ratio_list = []
     for dataset in datasets:
 
@@ -180,7 +180,7 @@ if __name__ == "__main__":
                      K_epoch = cfg.K_epoch,
                      layers=list(eval(cfg.ppo_layers))
                      )
-        agent.load_network("episode2900.pt") # 2900, 1600
+        agent.load_network("episode2800.pt") # 2900, 1600
         reward_list = list()
         n_eval = 200
         non_lose_ratio = 0
