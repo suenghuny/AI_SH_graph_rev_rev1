@@ -119,8 +119,12 @@ class Environment:
             if value['side']=='blue':
                 speed = 25
                 course = 90
-                initial_position_x = 50+random.uniform(-15, 15)
-                initial_position_y = 50+random.uniform(-15, 15)
+                if value['number'] == 1:
+                    initial_position_x = 50
+                    initial_position_y = 50
+                else:
+                    initial_position_x = 50+300
+                    initial_position_y = 50+40
             else:
                 if mode == True:
                     speed = 25

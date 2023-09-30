@@ -291,7 +291,7 @@ class Agent:
 
         return action_blue, prob_a, mask, a_index
 
-    def learn(self):
+    def learn(self, e = 10000000000):
         ship_feature, \
         ship_feature_next, \
         missile_node_feature, \
@@ -344,7 +344,6 @@ class Agent:
                 entropy = -torch.sum(torch.exp(pi) * pi, dim=1)
 
                 loss = - torch.min(surr1, surr2) + 0.6 * F.smooth_l1_loss(v_s, td_target.detach()) -0.01*entropy.mean()# 수정 + 엔트로피
-
                 print(loss.mean().item())
                 if loss.mean().item() == float('inf') or loss.mean().item() == float('-inf'):
                     print("pi_a", pi_a)
@@ -358,7 +357,10 @@ class Agent:
 
             self.optimizer.zero_grad()
             loss.mean().backward()
-            torch.nn.utils.clip_grad_norm_(self.eval_params, cfg.grad_clip)
+            if e >=cfg.grad_clip_step:
+                torch.nn.utils.clip_grad_norm_(self.eval_params, cfg.grad_clip_reduce)
+            else:
+                torch.nn.utils.clip_grad_norm_(self.eval_params, cfg.grad_clip)
             self.optimizer.step()
             self.scheduler.step()
 

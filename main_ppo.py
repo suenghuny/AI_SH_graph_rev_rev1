@@ -42,7 +42,7 @@ def preprocessing(scenarios):
 
 
 
-def train(agent, env, t):
+def train(agent, env, t, e):
     temp = random.uniform(fix_l, fix_u)
     agent_yellow = Policy(env, rule='rule2', temperatures=[temp, temp])
     done = False
@@ -93,7 +93,7 @@ def train(agent, env, t):
 
 
     agent.eval_check(eval=False)
-    agent.learn()
+    agent.learn(e = e)
     return episode_reward, win_tag, t
 
 
@@ -274,7 +274,7 @@ if __name__ == "__main__":
                       simtime_per_framerate=simtime_per_frame,
                       ciws_threshold=ciws_threshold,
                       action_history_step=cfg.action_history_step)
-        episode_reward, win_tag, t = train(agent, env, t)
+        episode_reward, win_tag, t = train(agent, env, t, e)
         if e % 100 == 0:
             agent.save_network(e, output_dir)
         reward_list.append(episode_reward)
