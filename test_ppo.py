@@ -142,7 +142,7 @@ if __name__ == "__main__":
     records = list()
     import torch, random
 
-    datasets = [i for i in range(17, 21)]
+    datasets = [i for i in range(1, 25)]
     non_lose_ratio_list = []
     for dataset in datasets:
 

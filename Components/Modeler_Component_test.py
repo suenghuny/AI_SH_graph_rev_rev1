@@ -119,12 +119,8 @@ class Environment:
             if value['side']=='blue':
                 speed = 25
                 course = 90
-                if value['number'] == 1:
-                    initial_position_x = 50
-                    initial_position_y = 50
-                else:
-                    initial_position_x = 50+400
-                    initial_position_y = 50+70
+                initial_position_x = 50+random.uniform(-15, 15)
+                initial_position_y = 50+random.uniform(-15, 15)
             else:
                 if mode == True:
                     speed = 25
@@ -135,8 +131,10 @@ class Environment:
                 else:
                     speed = 25
                     course = 90
-                    initial_position_x = 50 + 10 * inception_data['inception_distance'] * np.cos(inception_range * np.pi / 180)+ 10* random.normalvariate(inception_data['enemy_spacing_mean'], inception_data['enemy_spacing_std'])
-                    initial_position_y = 50 + 10 * inception_data['inception_distance'] * np.sin(inception_range* np.pi / 180) + 10* random.normalvariate(inception_data['enemy_spacing_mean'], inception_data['enemy_spacing_std'])
+                    initial_position_x = 50 + 10 * inception_data['inception_distance'] * np.cos(
+                        inception_range * np.pi / 180)+ 10* random.normalvariate(inception_data['enemy_spacing_mean'], inception_data['enemy_spacing_std'])
+                    initial_position_y = 50 + 10 * inception_data['inception_distance'] * np.sin(
+                        inception_range* np.pi / 180) + 10* random.normalvariate(inception_data['enemy_spacing_mean'], inception_data['enemy_spacing_std'])
             #print(initial_position_x, initial_position_y)
 
 
