@@ -175,7 +175,7 @@ if __name__ == "__main__":
     polar_chart = [polar_chart_scenario1]
     df_dict = {}
     episode_polar_chart = polar_chart[0]
-    datasets = [i for i in range(1,25)]
+    datasets = [i for i in range(25,31)]
     non_lose_ratio_list = []
     for dataset in datasets:
         fitness_history = []

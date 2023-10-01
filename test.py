@@ -3,10 +3,6 @@ import torch, random
 from cfg import get_cfg
 from draw_graph import visualize_heterogeneous_graph
 cfg = get_cfg()
-seed = 112
-np.random.seed(seed)
-random.seed(seed)
-torch.manual_seed(seed)
 
 
 from Components.Modeler_Component_test import *
@@ -29,13 +25,14 @@ def preprocessing(scenarios):
                       "Data/Test/dataset{}/SSM.txt".format(scenario),
                       "Data/Test/dataset{}/inception.txt".format(scenario)]
     else:
-        input_path = "Data\input_data.xlsx"
+        input_path = "Data/Test/dataset{}/input_data.xlsx".format(scenario)
 
     data = Adapter(input_path=input_path,
                    mode=mode,
                    polar_chart=episode_polar_chart,
                    polar_chart_visualize=polar_chart_visualize)
     return data
+
 
 
 
@@ -135,13 +132,12 @@ if __name__ == "__main__":
     decision_timestep = cfg.decision_timestep
     detection_by_height = False  # 고도에 의한
     num_iteration = cfg.num_episode  # 시뮬레이션 반복횟수
-    mode = 'txt'  # 전처리 모듈 / 'excel' : input_data.xlsx 파일 적용, 'txt' "Data\ship.txt", "Data\patrol_aircraft.txt", "Data\SAM.txt", "Data\SSM.txt"를 적용
+    mode = 'excel'  # 전처리 모듈 / 'excel' : input_data.xlsx 파일 적용, 'txt' "Data\ship.txt", "Data\patrol_aircraft.txt", "Data\SAM.txt", "Data\SSM.txt"를 적용
     rule = 'rule2'  # rule1 : 랜덤 정책 / rule2 : 거리를 기반 합리성에 기반한 정책(softmax policy)
     temperature = [10,
                    20]  # rule = 'rule2'인 경우만 적용 / 의사결정의 flexibility / 첫번째 index : 공중 위험이 낮은 상태, 두번째 index : 공중 위험이 높은 상태
     ciws_threshold = 1
     polar_chart_visualize = False
-    scenarios = ['scenario1', 'scenario2', 'scenario3']
     lose_ratio = list()
     remains_ratio = list()
     polar_chart_scenario1 = [33, 29, 25, 33, 30, 30, 55, 27, 27, 35, 25, 30, 40]  # RCS의 polarchart 적용
@@ -152,88 +148,14 @@ if __name__ == "__main__":
     episode_polar_chart = polar_chart[0]
     records = list()
 
-    data = preprocessing(1)
-    t = 0
-    env = modeler(data,
-                  visualize=visualize,
-                  size=size,
-                  detection_by_height=detection_by_height,
-                  tick=tick,
-                  simtime_per_framerate=simtime_per_frame,
-                  ciws_threshold=ciws_threshold,
-                  action_history_step=cfg.action_history_step)
+    datasets = [i for i in range(1, 31)]
+    non_lose_ratio_list = []
+    for dataset in datasets:
 
-    n_node_feature_missile = env.friendlies_fixed_list[0].air_tracking_limit + env.friendlies_fixed_list[
-        0].air_engagement_limit + env.friendlies_fixed_list[0].num_m_sam + 1
-    n_node_feature_enemy = env.friendlies_fixed_list[0].surface_tracking_limit + 1
-    agent = Agent(num_agent=1,
-                  feature_size_ship=env.get_env_info()["ship_feature_shape"],
-                  feature_size_enemy=env.get_env_info()["enemy_feature_shape"],
-                  feature_size_missile=env.get_env_info()["missile_feature_shape"],
-                  feature_size_action=env.get_env_info()["action_feature_shape"],
-
-                  iqn_layers=list(eval(cfg.iqn_layers)),
-
-                  node_embedding_layers_ship=list(eval(cfg.ship_layers)),
-                  node_embedding_layers_missile=list(eval(cfg.missile_layers)),
-                  node_embedding_layers_enemy=list(eval(cfg.enemy_layers)),
-                  node_embedding_layers_action=list(eval(cfg.action_layers)),
-                  hidden_size_comm=cfg.hidden_size_comm,
-                  hidden_size_enemy=cfg.hidden_size_enemy,  #### 수정요망
-
-                  n_multi_head=cfg.n_multi_head,
-                  n_representation_ship=cfg.n_representation_ship,
-                  n_representation_missile=cfg.n_representation_missile,
-                  n_representation_enemy=cfg.n_representation_enemy,
-                  n_representation_action=cfg.n_representation_action,
-
-                  dropout=0.6,
-                  action_size=env.get_env_info()["n_actions"],
-                  buffer_size=cfg.buffer_size,
-                  batch_size=cfg.batch_size,
-                  learning_rate=cfg.lr,  # 0.0001,
-                  gamma=cfg.gamma,
-                  GNN='GAT',
-                  teleport_probability=cfg.teleport_probability,
-                  gtn_beta=0.1,
-
-                  n_node_feature_missile=env.friendlies_fixed_list[0].air_tracking_limit +
-                                         env.friendlies_fixed_list[0].air_engagement_limit +
-                                         env.friendlies_fixed_list[0].num_m_sam +
-                                         1,
-
-                  n_node_feature_enemy=env.friendlies_fixed_list[0].surface_tracking_limit + 1,
-                  n_step=n_step,
-                  beta=cfg.per_beta,
-                  per_alpha=cfg.per_alpha,
-                  iqn_layer_size=cfg.iqn_layer_size,
-                  iqn_N=cfg.iqn_N,
-                  n_cos=cfg.n_cos,
-                  num_nodes=n_node_feature_missile
-
-                  )
-
-    agent.load_model("2200.pt")
-    anneal_episode = cfg.anneal_episode
-    anneal_step = (cfg.per_beta - 1) / anneal_episode
-    print("epsilon_greedy", cfg.epsilon_greedy)
-    epsilon = cfg.epsilon
-    min_epsilon = cfg.min_epsilon
-    eval_lose_ratio = list()
-    eval_win_ratio = list()
-    lose_ratio = list()
-    win_ratio = list()
-    reward_list = list()
-
-    eval_lose_ratio1 = list()
-    eval_win_ratio1 = list()
-    anneal_epsilon = (epsilon - min_epsilon) / cfg.anneal_step
-    print("noise", cfg.with_noise)
-    non_lose_rate = list()
-
-    n = 500
-    non_lose_rate = list()
-    for j in range(n):
+        print("====dataset{}====".format(dataset))
+        fitness_history = []
+        data = preprocessing(dataset)
+        t = 0
         env = modeler(data,
                       visualize=visualize,
                       size=size,
@@ -241,10 +163,89 @@ if __name__ == "__main__":
                       tick=tick,
                       simtime_per_framerate=simtime_per_frame,
                       ciws_threshold=ciws_threshold,
-                      action_history_step=cfg.action_history_step
-                      )
-        episode_reward, win_tag, leakers, overtime = evaluation(agent, env, with_noise=cfg.with_noise)
+                      action_history_step=cfg.action_history_step)
 
-        if win_tag == 'draw' or win_tag == 'win':
-            non_lose_rate.append(1)
-        print('전', win_tag, episode_reward, env.now, overtime, np.sum(non_lose_rate)/(j+1))
+        n_node_feature_missile = env.friendlies_fixed_list[0].air_tracking_limit + env.friendlies_fixed_list[
+            0].air_engagement_limit + env.friendlies_fixed_list[0].num_m_sam + 1
+        n_node_feature_enemy = env.friendlies_fixed_list[0].surface_tracking_limit + 1
+        agent = Agent(num_agent=1,
+                      feature_size_ship=env.get_env_info()["ship_feature_shape"],
+                      feature_size_enemy=env.get_env_info()["enemy_feature_shape"],
+                      feature_size_missile=env.get_env_info()["missile_feature_shape"],
+                      feature_size_action=env.get_env_info()["action_feature_shape"],
+
+                      iqn_layers=list(eval(cfg.iqn_layers)),
+
+                      node_embedding_layers_ship=list(eval(cfg.ship_layers)),
+                      node_embedding_layers_missile=list(eval(cfg.missile_layers)),
+                      node_embedding_layers_enemy=list(eval(cfg.enemy_layers)),
+                      node_embedding_layers_action=list(eval(cfg.action_layers)),
+                      hidden_size_comm=cfg.hidden_size_comm,
+                      hidden_size_enemy=cfg.hidden_size_enemy,  #### 수정요망
+
+                      n_multi_head=cfg.n_multi_head,
+                      n_representation_ship=cfg.n_representation_ship,
+                      n_representation_missile=cfg.n_representation_missile,
+                      n_representation_enemy=cfg.n_representation_enemy,
+                      n_representation_action=cfg.n_representation_action,
+
+                      dropout=0.6,
+                      action_size=env.get_env_info()["n_actions"],
+                      buffer_size=cfg.buffer_size,
+                      batch_size=cfg.batch_size,
+                      learning_rate=cfg.lr,  # 0.0001,
+                      gamma=cfg.gamma,
+                      GNN='GCRN',
+                      teleport_probability=cfg.teleport_probability,
+                      gtn_beta=0.1,
+
+                      n_node_feature_missile=env.friendlies_fixed_list[0].air_tracking_limit +
+                                             env.friendlies_fixed_list[0].air_engagement_limit +
+                                             env.friendlies_fixed_list[0].num_m_sam +
+                                             1,
+
+                      n_node_feature_enemy=env.friendlies_fixed_list[0].surface_tracking_limit + 1,
+                      n_step=n_step,
+                      beta=cfg.per_beta,
+                      per_alpha=cfg.per_alpha,
+                      iqn_layer_size=cfg.iqn_layer_size,
+                      iqn_N=cfg.iqn_N,
+                      n_cos=cfg.n_cos,
+                      num_nodes=n_node_feature_missile
+
+                      )
+
+        agent.load_model("3000.pt")
+
+
+        epsilon = 0
+        eval_lose_ratio = list()
+        eval_win_ratio = list()
+        lose_ratio = list()
+        win_ratio = list()
+        reward_list = list()
+
+        eval_lose_ratio1 = list()
+        eval_win_ratio1 = list()
+        print("noise", cfg.with_noise)
+        non_lose_rate = list()
+
+        n = cfg.n_test
+        non_lose_rate = list()
+        for j in range(n):
+            env = modeler(data,
+                          visualize=visualize,
+                          size=size,
+                          detection_by_height=detection_by_height,
+                          tick=tick,
+                          simtime_per_framerate=simtime_per_frame,
+                          ciws_threshold=ciws_threshold,
+                          action_history_step=cfg.action_history_step
+                          )
+            episode_reward, win_tag, leakers, overtime = evaluation(agent, env, with_noise=cfg.with_noise)
+            if win_tag == 'draw' or win_tag == 'win':
+                non_lose_rate.append(1)
+            print('전', win_tag, episode_reward, env.now, overtime, np.sum(non_lose_rate)/(j+1))
+        non_lose_ratio_list.append(np.mean(non_lose_rate))
+        df = pd.DataFrame(non_lose_ratio_list)
+        df.to_csv("dqn_result.csv")

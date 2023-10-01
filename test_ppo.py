@@ -142,7 +142,7 @@ if __name__ == "__main__":
     records = list()
     import torch, random
 
-    datasets = [i for i in range(1, 25)]
+    datasets = [i for i in range(25, 31)]
     non_lose_ratio_list = []
     for dataset in datasets:
 
@@ -180,9 +180,10 @@ if __name__ == "__main__":
                      K_epoch = cfg.K_epoch,
                      layers=list(eval(cfg.ppo_layers))
                      )
-        agent.load_network("episode2800.pt") # 2900, 1600
+        load_file = "episode2800"
+        agent.load_network(load_file+'.pt') # 2900, 1600
         reward_list = list()
-        n_eval = 200
+
         non_lose_ratio = 0
         non_lose_records = []
         seed = cfg.seed
@@ -210,5 +211,5 @@ if __name__ == "__main__":
 
         non_lose_ratio_list.append(non_lose_ratio)
         df = pd.DataFrame(non_lose_ratio_list)
-        df.to_csv("ppo_result.csv")
+        df.to_csv("ppo_result_{}.csv".format(load_file))
 
