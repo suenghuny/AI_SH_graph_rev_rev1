@@ -140,9 +140,7 @@ if __name__ == "__main__":
     # scenario = np.random.choice(scenarios)
     episode_polar_chart = polar_chart[0]
     records = list()
-    import torch, random
-
-    datasets = [i for i in range(25, 31)]
+    datasets = [i for i in range(1, 31)]
     non_lose_ratio_list = []
     for dataset in datasets:
 

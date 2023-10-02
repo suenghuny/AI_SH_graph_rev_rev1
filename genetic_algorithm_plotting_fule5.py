@@ -5,6 +5,8 @@ from cfg import get_cfg
 
 import numpy as np
 
+fix_l = 0
+fix_u = 17
 fit_records = []
 best_solutions = dict()
 def on_start(ga_instance):
@@ -102,7 +104,7 @@ def evaluation(env,
                temperature2,
                warning_distance
                ):
-    temp = random.uniform(0, 50)
+    temp = random.uniform(fix_l, fix_u)
     agent_blue = Policy(env, rule='rule3', temperatures=[temperature1, temperature2])
     agent_yellow = Policy(env, rule='rule2', temperatures=[temp, temp])
     done = False
@@ -175,7 +177,7 @@ if __name__ == "__main__":
     polar_chart = [polar_chart_scenario1]
     df_dict = {}
     episode_polar_chart = polar_chart[0]
-    datasets = [i for i in range(25,31)]
+    datasets = [i for i in range(1,31)]
     non_lose_ratio_list = []
     for dataset in datasets:
         fitness_history = []

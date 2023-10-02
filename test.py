@@ -38,6 +38,7 @@ def preprocessing(scenarios):
 
 def evaluation(agent, env, with_noise=False):
     temp = random.uniform(fix_l, fix_u)
+
     agent_yellow = Policy(env, rule='rule2', temperatures=[temp, temp])
     done = False
     episode_reward = 0
@@ -243,9 +244,9 @@ if __name__ == "__main__":
                           action_history_step=cfg.action_history_step
                           )
             episode_reward, win_tag, leakers, overtime = evaluation(agent, env, with_noise=cfg.with_noise)
-            if win_tag == 'draw' or win_tag == 'win':
+            if win_tag != 'lose':
                 non_lose_rate.append(1)
             print('전', win_tag, episode_reward, env.now, overtime, np.sum(non_lose_rate)/(j+1))
         non_lose_ratio_list.append(np.mean(non_lose_rate))
         df = pd.DataFrame(non_lose_ratio_list)
-        df.to_csv("dqn_result.csv")
+        df.to_csv(output_dir + "dqn_result.csv")
