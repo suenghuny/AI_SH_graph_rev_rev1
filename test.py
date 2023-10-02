@@ -252,7 +252,7 @@ if __name__ == "__main__":
             if win_tag != 'lose':
                 non_lose_rate.append(1)
             else:
-                non_lose_rate.append(1)
+                non_lose_rate.append(0)
             print('전', win_tag, episode_reward, env.now, overtime, np.sum(non_lose_rate)/(j+1))
         non_lose_ratio_list.append(np.mean(non_lose_rate))
         df = pd.DataFrame(non_lose_ratio_list)
