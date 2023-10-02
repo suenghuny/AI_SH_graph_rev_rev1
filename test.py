@@ -233,6 +233,11 @@ if __name__ == "__main__":
 
         n = cfg.n_test
         non_lose_rate = list()
+
+        seed = cfg.seed
+        np.random.seed(seed)
+        random.seed(seed)
+        torch.manual_seed(seed)
         for j in range(n):
             env = modeler(data,
                           visualize=visualize,
