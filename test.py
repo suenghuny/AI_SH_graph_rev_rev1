@@ -216,7 +216,7 @@ if __name__ == "__main__":
 
                       )
 
-        agent.load_model("3000.pt")
+        agent.load_model("3200.pt")
 
 
         epsilon = 0
