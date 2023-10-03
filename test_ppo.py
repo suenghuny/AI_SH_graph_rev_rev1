@@ -209,5 +209,5 @@ if __name__ == "__main__":
 
         non_lose_ratio_list.append(non_lose_ratio)
         df = pd.DataFrame(non_lose_ratio_list)
-        df.to_csv("ppo_result_{}.csv".format(load_file))
+        df.to_csv("ppo_result_{}_angle_{}.csv".format(load_file, cfg.inception_angle))
 

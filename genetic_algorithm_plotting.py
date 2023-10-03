@@ -251,7 +251,7 @@ if __name__ == "__main__":
 
         best_solution_records[dataset] = empty_dict
         df_fit = pd.DataFrame(fit_records)
-        df_fit.to_csv('fitness_records_dataset_param2{}.csv'.format(dataset))
+        df_fit.to_csv('fitness_records_dataset{}_rule3_param2_{}.csv'.format(dataset, cfg.inception_angle))
 
         fit_records = []
 
@@ -260,7 +260,7 @@ if __name__ == "__main__":
         score = simulation(best_solutions, ga = False)
         non_lose_ratio_list.append(score)
         df_result = pd.DataFrame(non_lose_ratio_list)
-        df_result.to_csv("GA_result_param2.csv")
+        df_result.to_csv("GA_result__rule3_param2.csv")
 
 
 

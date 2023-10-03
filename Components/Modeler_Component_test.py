@@ -114,7 +114,7 @@ class Environment:
         inception_data = self.data.inception_data
         noise = random.uniform(-10, 10)
         self.missile_speed_list = list()
-        inception_range = inception_data['inception_angle']
+        inception_range = cfg.inception_angle
         for key, value in data.ship_data.items():
             if value['side']=='blue':
                 speed = 25
