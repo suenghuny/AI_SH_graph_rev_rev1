@@ -34,7 +34,7 @@ def on_stop(ga_instance, last_population_fitness):
     print("on_stop()")
 
 
-def simulation(solution, ga = True):
+def simulation(solution, ga = True,raw_data = None):
     temperature1 = solution[0]
     interval_constant_blue1 = solution[1]
     temperature2 = solution[2]
