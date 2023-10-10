@@ -70,12 +70,19 @@ def simulation(solution, ga = True):
         epi_reward, eval, win_tag= evaluation(env, temperature1=temperature1,temperature2 = temperature2,
                                               warning_distance=warning_distance)
         if win_tag != 'lose':
-            score += 1/n
+            score += 1 / n
+            if ga == False:
+                raw_data.append([str(env.random_recording), 1])
         else:
             score += 0
+            if ga == False:
+                raw_data.append([str(env.random_recording), 0])
 
     print(score, solution)
-    return score
+    if ga == True:
+        return score
+    else:
+        return score, raw_data
 
 def fitness_func(ga_instance, solution, solution_idx):
     score = simulation(solution)
@@ -180,6 +187,7 @@ if __name__ == "__main__":
     episode_polar_chart = polar_chart[0]
     datasets = [i for i in range(1, 31)]
     non_lose_ratio_list = []
+    raw_data = list()
     for dataset in datasets:
         fitness_history = []
         data = preprocessing(dataset)
@@ -205,6 +213,7 @@ if __name__ == "__main__":
 
         initial_population = []
         sol_per_pop =8
+        np.random.seed(cfg.seed)
         for _ in range(sol_per_pop):
             new_solution = [np.random.choice(space) for space in solution_space]
             initial_population.append(new_solution)
@@ -237,7 +246,9 @@ if __name__ == "__main__":
                                on_crossover=on_crossover,
                                on_mutation=on_mutation,
                                on_generation=on_generation,
-                               on_stop=on_stop
+                               on_stop=on_stop,
+                               random_seed=cfg.seed
+
                                )
 
         # 최적화 실행
@@ -259,10 +270,18 @@ if __name__ == "__main__":
 
         print("최적해:", best_solutions)
         print("최적해의 적합도:", fitness)
-        score = simulation(best_solutions, ga = False)
+        score, raw_data = simulation(best_solutions, ga = False, raw_data = raw_data)
         non_lose_ratio_list.append(score)
         df_result = pd.DataFrame(non_lose_ratio_list)
-        df_result.to_csv("GA_result__rule3_param2.csv")
+        df_raw = pd.DataFrame(raw_data)
+        if vessl_on == True:
+            df_result.to_csv(output_dir + "GA_result_rule3_param2_angle_{}.csv".format(cfg.inception_angle))
+            df_raw.to_csv(output_dir+"raw_data_rule3_angle_{}.csv".format(cfg.inception_angle))
+            vessl.log(step=dataset, payload={'non_lose_ratio': score})
+        else:
+            df_result.to_csv("GA_result_rule3_param2_angle_{}.csv".format(cfg.inception_angle))
+            df_raw.to_csv("raw_data_rule3_angle_{}.csv".format(cfg.inception_angle))
+
 
 
 

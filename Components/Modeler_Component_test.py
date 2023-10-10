@@ -80,6 +80,9 @@ class Environment:
         self.air_alert_distance_yellow = air_alert_distance_yellow
         self.interval_constant_blue = interval_constant_blue
         self.interval_constant_yellow = interval_constant_yellow
+        # LSAM MSAM CIWS
+
+
         if visualize == True:
             self.pygame = pygame
             self.game_initializer = self.pygame.init()
@@ -115,12 +118,15 @@ class Environment:
         noise = random.uniform(-10, 10)
         self.missile_speed_list = list()
         inception_range = cfg.inception_angle
+        self.random_recording = list()
         for key, value in data.ship_data.items():
             if value['side']=='blue':
                 speed = 25
                 course = 90
                 initial_position_x = 50+random.uniform(-15, 15)
                 initial_position_y = 50+random.uniform(-15, 15)
+
+
             else:
                 if mode == True:
                     speed = 25
@@ -136,7 +142,7 @@ class Environment:
                     initial_position_y = 50 + 10 * inception_data['inception_distance'] * np.sin(
                         inception_range* np.pi / 180) + 10* random.normalvariate(inception_data['enemy_spacing_mean'], inception_data['enemy_spacing_std'])
             #print(initial_position_x, initial_position_y)
-
+            self.random_recording.append((initial_position_x, initial_position_y))
 
             type_m_sam = data.SAM_data[int(value['type_m_sam'])]
             type_l_sam = data.SAM_data[int(value['type_l_sam'])]

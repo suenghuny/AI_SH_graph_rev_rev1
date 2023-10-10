@@ -304,6 +304,8 @@ class Missile:
                                         """
                                         state feature 만들기
                                         """
+                                        # if self.launcher.side == 'blue':
+                                        #     print("명중이요!")
                                         self.launcher.missile_destroying_history += 1
                                         self.target.status = 'destroyed'
                                         flying_ssms_enemy.remove(self.target)  # self.target은 yellow의 ssm
