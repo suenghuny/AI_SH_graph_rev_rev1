@@ -151,6 +151,7 @@ if __name__ == "__main__":
 
     datasets = [i for i in range(1, 31)]
     non_lose_ratio_list = []
+    raw_data = list()
     for dataset in datasets:
 
         print("====dataset{}====".format(dataset))
@@ -251,9 +252,14 @@ if __name__ == "__main__":
             episode_reward, win_tag, leakers, overtime = evaluation(agent, env, with_noise=cfg.with_noise)
             if win_tag != 'lose':
                 non_lose_rate.append(1)
+                raw_data.append([str(env.random_recording), 1])
             else:
                 non_lose_rate.append(0)
+                raw_data.append([str(env.random_recording), 0])
             print('전', win_tag, episode_reward, env.now, overtime, np.sum(non_lose_rate)/(j+1))
         non_lose_ratio_list.append(np.mean(non_lose_rate))
         df = pd.DataFrame(non_lose_ratio_list)
         df.to_csv(output_dir + "dqn_result.csv")
+        df_raw = pd.DataFrame(raw_data)
+        df_raw.to_csv(output_dir + "raw_data_dqn_angle_{}.csv".format(cfg.inception_angle))
+
