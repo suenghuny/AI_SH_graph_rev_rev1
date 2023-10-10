@@ -273,9 +273,7 @@ if __name__ == "__main__":
                 vessl.log(step=s, payload={'fitness_records_dataset_{}'.format(dataset): f})
         else:
             df_fit.to_csv('fitness_records_dataset{}_rule5_param2_angle_{}.csv'.format(dataset, cfg.inception_angle))
-
         fit_records = []
-
         print("최적해:", best_solutions)
         print("최적해의 적합도:", fitness)
         score, raw_data = simulation(best_solutions, ga = False, raw_data = raw_data)

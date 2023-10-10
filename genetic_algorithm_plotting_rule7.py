@@ -271,7 +271,7 @@ if __name__ == "__main__":
 
         best_solution_records[dataset] = empty_dict
         df_fit = pd.DataFrame(fit_records)
-        df_fit.to_csv('fitness_records_dataset{}_rule7_param2.csv'.format(dataset))
+        #df_fit.to_csv('fitness_records_dataset{}_rule7_param2.csv'.format(dataset))
         if vessl_on == True:
             df_fit.to_csv(output_dir + 'fitness_records_dataset{}_rule7_param2.csv'.format(dataset))
             for s in range(len(fit_records)):

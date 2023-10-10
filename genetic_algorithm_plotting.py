@@ -264,7 +264,7 @@ if __name__ == "__main__":
 
         best_solution_records[dataset] = empty_dict
         df_fit = pd.DataFrame(fit_records)
-        df_fit.to_csv('fitness_records_dataset{}_rule3_param2_{}.csv'.format(dataset, cfg.inception_angle))
+
 
         fit_records = []
 
@@ -277,10 +277,12 @@ if __name__ == "__main__":
         if vessl_on == True:
             df_result.to_csv(output_dir + "GA_result_rule3_param2_angle_{}.csv".format(cfg.inception_angle))
             df_raw.to_csv(output_dir+"raw_data_rule3_angle_{}.csv".format(cfg.inception_angle))
+            df_fit.to_csv(output_dir+'fitness_records_dataset{}_rule3_param2_{}.csv'.format(dataset, cfg.inception_angle))
             vessl.log(step=dataset, payload={'non_lose_ratio': score})
         else:
             df_result.to_csv("GA_result_rule3_param2_angle_{}.csv".format(cfg.inception_angle))
             df_raw.to_csv("raw_data_rule3_angle_{}.csv".format(cfg.inception_angle))
+            df_fit.to_csv('fitness_records_dataset{}_rule3_param2_{}.csv'.format(dataset, cfg.inception_angle))
 
 
 
