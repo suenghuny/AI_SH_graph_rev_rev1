@@ -180,14 +180,14 @@ if __name__ == "__main__":
     """
 
     mode = 'excel'
-    vessl_on = False
+    vessl_on = cfg.vessl
     polar_chart_visualize = False
     polar_chart_scenario1 = [33, 29, 25, 33, 30, 30, 55, 27, 27, 35, 25, 30, 40]  # RCS의 polarchart 적용
     best_solution_records = dict()
     polar_chart = [polar_chart_scenario1]
     df_dict = {}
     episode_polar_chart = polar_chart[0]
-    datasets = [i for i in range(1, 31)]
+    datasets = [i for i in range(20, 31)]
     non_lose_ratio_list = []
     raw_data = list()
     for dataset in datasets:
@@ -273,12 +273,12 @@ if __name__ == "__main__":
         df_fit = pd.DataFrame(fit_records)
         #df_fit.to_csv('fitness_records_dataset{}_rule7_param2.csv'.format(dataset))
         if vessl_on == True:
-            df_fit.to_csv(output_dir + 'fitness_records_dataset{}_rule7_param2.csv'.format(dataset))
+            df_fit.to_csv(output_dir + 'fitness_records_dataset{}_rule7_param2_remains.csv'.format(dataset))
             for s in range(len(fit_records)):
                 f = fit_records[s]
                 vessl.log(step=s, payload={'fitness_records_dataset_{}'.format(dataset): f})
         else:
-            df_fit.to_csv('fitness_records_dataset{}_rule7_param2_angle_{}.csv'.format(dataset, cfg.inception_angle))
+            df_fit.to_csv('fitness_records_dataset{}_rule7_param2_angle_{}_remains.csv'.format(dataset, cfg.inception_angle))
 
         fit_records = []
 
@@ -289,12 +289,12 @@ if __name__ == "__main__":
         df_result = pd.DataFrame(non_lose_ratio_list)
         df_raw = pd.DataFrame(raw_data)
         if vessl_on == True:
-            df_result.to_csv(output_dir + "GA_result_rule7_param2_angle_{}.csv".format(cfg.inception_angle))
-            df_raw.to_csv(output_dir+"raw_data_rule7_angle_{}.csv".format(cfg.inception_angle))
+            df_result.to_csv(output_dir + "GA_result_rule7_param2_angle_{}_remains.csv".format(cfg.inception_angle))
+            df_raw.to_csv(output_dir+"raw_data_rule7_angle_{}_remains.csv".format(cfg.inception_angle))
             vessl.log(step=dataset, payload={'non_lose_ratio': score})
         else:
-            df_result.to_csv("GA_result_rule7_param2_angle_{}.csv".format(cfg.inception_angle))
-            df_raw.to_csv("raw_data_rule7_angle_{}.csv".format(cfg.inception_angle))
+            df_result.to_csv("GA_result_rule7_param2_angle_{}_remains.csv".format(cfg.inception_angle))
+            df_raw.to_csv("raw_data_rule7_angle_{}_remains.csv".format(cfg.inception_angle))
 
 
 

@@ -88,6 +88,6 @@ def get_cfg():
     parser.add_argument("--bonus_reward", type=int, default=20, help="bonus reward")
     parser.add_argument("--loss_weight", type=float, default=0.5, help="loss_weight_value")
 
-    parser.add_argument("--inception_angle", type=float, default=135, help="loss_weight_value")
+    parser.add_argument("--inception_angle", type=float, default=180, help="loss_weight_value")
 
     return parser.parse_args()

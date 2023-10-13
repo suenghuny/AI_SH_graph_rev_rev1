@@ -142,6 +142,7 @@ if __name__ == "__main__":
     records = list()
     datasets = [i for i in range(1, 31)]
     non_lose_ratio_list = []
+    raw_data = list()
     for dataset in datasets:
 
         print("====dataset{}====".format(dataset))
@@ -178,7 +179,7 @@ if __name__ == "__main__":
                      K_epoch = cfg.K_epoch,
                      layers=list(eval(cfg.ppo_layers))
                      )
-        load_file = "episode2700_5scene"
+        load_file = "episode2800"
         agent.load_network(load_file+'.pt') # 2900, 1600
         reward_list = list()
 
@@ -188,6 +189,7 @@ if __name__ == "__main__":
         np.random.seed(seed)
         random.seed(seed)
         torch.manual_seed(seed)
+
         for e in range(cfg.n_test):
             env = modeler(data,
                           visualize=visualize,
@@ -201,16 +203,17 @@ if __name__ == "__main__":
             if win_tag != 'lose':
                 non_lose_ratio += 1/cfg.n_test
                 non_lose_records.append(1)
+                raw_data.append([str(env.random_recording), 1])
             else:
                 non_lose_records.append(0)
+                raw_data.append([str(env.random_recording), 0])
 
 
             print(e, win_tag, np.mean(non_lose_records))
 
         non_lose_ratio_list.append(non_lose_ratio)
         df = pd.DataFrame(non_lose_ratio_list)
-        if vessl_on == True:
-            df.to_csv(output_dir+"ppo_result_{}_angle_{}.csv".format(load_file, cfg.inception_angle))
-        else:
-            df.to_csv("ppo_result_{}_angle_{}.csv".format(load_file, cfg.inception_angle))
+        df.to_csv("ppo_result_{}_angle_{}.csv".format(load_file, cfg.inception_angle))
+        df_raw = pd.DataFrame(raw_data)
+        df_raw.to_csv("raw_data_ppo_angle_{}.csv".format(cfg.inception_angle))
 
