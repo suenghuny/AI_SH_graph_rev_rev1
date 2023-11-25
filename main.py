@@ -273,7 +273,6 @@ if __name__ == "__main__":
     vessl_on = cfg.vessl
     if vessl_on == True:
         import vessl
-
         vessl.init()
         output_dir = "/output/"
         import os
@@ -323,7 +322,7 @@ if __name__ == "__main__":
     records = list()
     import torch, random
 
-    seed = 1234
+    seed = cfg.seed
     np.random.seed(seed)
     torch.manual_seed(seed)
     random.seed(seed)

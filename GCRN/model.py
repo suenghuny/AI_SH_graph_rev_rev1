@@ -87,8 +87,9 @@ class GCRN(nn.Module):
         Wh1 = Wq
         Wh2 = Wv
         e = Wh1 @ Wh2.T
-
-        return e*A
+        E = A.clone().float()
+        E[E == 0.] = 1e-8
+        return e*E
     def forward(self, A, X, mini_batch, layer = 0):
         if mini_batch == False:
             temp = list()
@@ -106,6 +107,11 @@ class GCRN(nn.Module):
             H = torch.cat(temp, dim = 1)
             #print(H.shape)
             H = self.embedding_layers(H)
+            # try:
+            #     print(H[0][4], H[2][4], H[8][4])
+            # except IndexError:
+            #     pass
+
             return H
         else:
             batch_size = X.shape[0]

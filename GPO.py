@@ -42,12 +42,19 @@ class PPONetwork(nn.Module):
 
 
 
-    def pi(self, x):
-        x = self.fc_pi(x)
-        x = F.elu(x)
-        x = self.forward_cal(x)
-        pi = self.output_pi(x)
-        return pi
+    def pi(self, x, visualize = False):
+        if visualize == False:
+            x = self.fc_pi(x)
+            x = F.elu(x)
+            x = self.forward_cal(x)
+            pi = self.output_pi(x)
+            return pi
+        else:
+            x = self.fc_pi(x)
+            x = F.elu(x)
+            x = self.forward_cal(x)
+            pi = self.output_pi(x)
+            return x
 
     def v(self, x):
         x = self.fc_v(x)
@@ -254,19 +261,18 @@ class Agent:
         return ship_feature, ship_feature_next, missile_node_feature, heterogeneous_edges, action_feature, action_blue, reward, prob, mask, done, avail_action_blue, a_index
 
     @torch.no_grad()
+    def get_td_target(self, ship_features, node_features_missile, heterogenous_edges, possible_actions, action_feature, reward, done):
+        obs_next, act_graph = self.get_node_representation(ship_features,node_features_missile, heterogenous_edges,mini_batch=False)
+        td_target = reward + self.gamma * self.network.v(obs_next) * (1 - done)
+        return td_target.tolist()[0][0]
+
+
+    @torch.no_grad()
     def sample_action(self, ship_features,node_features_missile, heterogenous_edges, possible_actions,action_feature):
-        obs, act_graph = self.get_node_representation(ship_features,
-                                                    node_features_missile,
-                                                      heterogenous_edges,
-                                                      mini_batch=False)
-
+        obs, act_graph = self.get_node_representation(ship_features,node_features_missile,heterogenous_edges,mini_batch=False)
         act_graph = act_graph[0:self.action_size, :]
-
         obs = obs.expand([act_graph.shape[0], obs.shape[1]])
         obs_n_action = torch.cat([obs, act_graph], dim = 1)
-
-
-
         logit = [self.network.pi(obs_n_action[i].unsqueeze(0)) for i in range(obs_n_action.shape[0])]
         logit = torch.stack(logit).view(1, -1)
         action_size = obs_n_action.shape[0]
@@ -274,22 +280,70 @@ class Agent:
              action_size = self.action_size
         remain_action = torch.tensor([-1e8 for _ in range(self.action_size - action_size)], device=device).unsqueeze(0)
         logit = torch.cat([logit, remain_action], dim=1)
-        #print(logit.shape, remain_action.shape)
         mask = torch.tensor(possible_actions, device=device).bool()
         logit = logit.masked_fill(mask == 0, -1e8)
         prob = torch.softmax(logit, dim=-1)
-
         m = Categorical(prob)
         a = m.sample().item()
-
-
         a_index = a
         prob_a = prob.squeeze(0)[a]
-
-
         action_blue = action_feature[a]
-
         return action_blue, prob_a, mask, a_index
+
+    @torch.no_grad()
+    def sample_action_visualize(self, ship_features,node_features_missile, heterogenous_edges, possible_actions,action_feature, random):
+        if random == False:
+            obs, act_graph = self.get_node_representation(ship_features,node_features_missile,heterogenous_edges,mini_batch=False)
+            act_graph = act_graph[0:self.action_size, :]
+            obs = obs.expand([act_graph.shape[0], obs.shape[1]])
+            obs_n_action = torch.cat([obs, act_graph], dim = 1)
+            logit = [self.network.pi(obs_n_action[i].unsqueeze(0)) for i in range(obs_n_action.shape[0])]
+            outputs = [self.network.pi(obs_n_action[i].unsqueeze(0), visualize=True) for i in
+                       range(obs_n_action.shape[0])]
+            logit = torch.stack(logit).view(1, -1)
+            action_size = obs_n_action.shape[0]
+            if action_size >= self.action_size:
+                 action_size = self.action_size
+            remain_action = torch.tensor([-1e8 for _ in range(self.action_size - action_size)], device=device).unsqueeze(0)
+            logit = torch.cat([logit, remain_action], dim=1)
+            mask = torch.tensor(possible_actions, device=device).bool()
+            logit = logit.masked_fill(mask == 0, -1e8)
+            prob = torch.softmax(logit, dim=-1)
+            m = Categorical(prob)
+            a = m.sample().item()
+            a_index = a
+            prob_a = prob.squeeze(0)[a]
+            action_blue = action_feature[a]
+        else:
+            obs, act_graph = self.get_node_representation(ship_features,node_features_missile,heterogenous_edges,mini_batch=False)
+            act_graph = act_graph[0:self.action_size, :]
+
+            obs = obs.expand([act_graph.shape[0], obs.shape[1]])
+            obs_n_action = torch.cat([obs, act_graph], dim = 1)
+            logit = [self.network.pi(obs_n_action[i].unsqueeze(0)) for i in range(obs_n_action.shape[0])]
+            outputs = [self.network.pi(obs_n_action[i].unsqueeze(0), visualize = True) for i in range(obs_n_action.shape[0])]
+            logit = torch.stack(logit).view(1, -1)
+            action_size = obs_n_action.shape[0]
+            if action_size >= self.action_size:
+                 action_size = self.action_size
+            remain_action = torch.tensor([-1e8 for _ in range(self.action_size - action_size)], device=device).unsqueeze(0)
+            logit = torch.cat([logit, remain_action], dim=1)
+            mask = torch.tensor(possible_actions, device=device).bool()
+            logit = logit.masked_fill(mask == 0, -1e8)
+            logit = logit.masked_fill(mask == 1, 1)
+            prob = torch.softmax(logit, dim=-1)
+            m = Categorical(prob)
+            a = m.sample().item()
+            a_index = a
+            prob_a = prob.squeeze(0)[a]
+            action_blue = action_feature[a]
+            #print(act_graph[a_index].tolist())
+        graph_embedding = act_graph[a_index].tolist()
+        node_feature = node_features_missile[a_index]
+
+        output = outputs[a_index].tolist()[0]
+        return action_blue, prob_a, mask, a_index, graph_embedding, node_feature, output
+
 
     def learn(self, e = 10000000000):
         ship_feature, \
@@ -333,9 +387,7 @@ class Agent:
             logit = logit.masked_fill(mask == 0, -1e8)
             pi = torch.softmax(logit, dim=-1)
             pi_a = pi.gather(1, a_indices)
-
             ratio = torch.log(pi_a+0.001) - torch.log(prob+0.001)  # a/b == exp(log(a)-log(b))
-
             ratio = ratio.clamp_(max=88)
             ratio = ratio.exp()
             surr1 = ratio * advantage
@@ -346,7 +398,6 @@ class Agent:
                 val_loss = F.smooth_l1_loss(v_s, td_target.detach())
                 ent = entropy.mean()
                 loss = - surr + cfg.loss_weight * val_loss -0.01*ent# 수정 + 엔트로피
-                print(loss.mean().item())
                 if loss.mean().item() == float('inf') or loss.mean().item() == float('-inf'):
                     print("pi_a", pi_a)
                     print("prob", prob)
@@ -377,7 +428,7 @@ class Agent:
                     "func_meta_path": self.func_meta_path.state_dict(),
                     "func_meta_path2": self.func_meta_path2.state_dict(),
                     "optimizer_state_dict": self.optimizer.state_dict()},
-                   file_dir + "episode%d.pt" % e)
+                   file_dir + "episode_revision%d.pt" % e)
 
     def load_network(self, file_dir):
         print(file_dir)
@@ -386,36 +437,3 @@ class Agent:
         self.node_representation_ship_feature.load_state_dict(checkpoint["node_representation_ship_feature"])
         self.func_meta_path.load_state_dict(checkpoint["func_meta_path"])
         self.func_meta_path2.load_state_dict(checkpoint["func_meta_path2"])
-
-
-
-        # self.Q_tar.load_state_dict(checkpoint["Q_tar"])
-        # self.node_representation_ship_feature.load_state_dict(checkpoint["node_representation_ship_feature"])
-        # self.func_meta_path.load_state_dict(checkpoint["func_meta_path"])
-        # self.func_meta_path2.load_state_dict(checkpoint["func_meta_path2"])
-        # self.DuelingQ.load_state_dict(checkpoint["dueling_Q"])
-
-
-# action_encoding = np.eye(action_size, dtype = np.float)
-#
-# cumul = list()
-# for n_epi in range(10000):
-#     s = env.reset()
-#     done = False
-#     epi_reward = 0
-#     s = s[0]
-#     step =0
-#     while not done:
-#         a, prob, mask = agent.get_action(s)
-#         s_prime, r, done, info, _ = env.step(a)
-#         mask = [True, True]
-#         epi_reward+= r
-#         step+=1
-#         agent.put_data((s, action_encoding[a], r, s_prime, prob[a].item(), mask, done))
-#         s = s_prime
-#     cumul.append(epi_reward)
-#     n = 100
-#     if n_epi > n:
-#         print(np.mean(cumul[-n:]))
-#     agent.train()
-#     #print(r)

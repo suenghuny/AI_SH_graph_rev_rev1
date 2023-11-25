@@ -138,7 +138,7 @@ if __name__ == "__main__":
     temperature = [10,
                    20]  # rule = 'rule2'인 경우만 적용 / 의사결정의 flexibility / 첫번째 index : 공중 위험이 낮은 상태, 두번째 index : 공중 위험이 높은 상태
     ciws_threshold = 1
-    polar_chart_visualize = False
+    polar_chart_visualize = True
     lose_ratio = list()
     remains_ratio = list()
     polar_chart_scenario1 = [33, 29, 25, 33, 30, 30, 55, 27, 27, 35, 25, 30, 40]  # RCS의 polarchart 적용

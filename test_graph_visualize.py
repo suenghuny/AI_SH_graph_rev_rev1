@@ -5,11 +5,13 @@ from collections import deque
 from cfg import get_cfg
 from GPO import Agent
 import numpy as np
+import json
 
 from scipy.stats import randint
 
 fix_l = 0
 fix_u = 17
+data_memory= []
 
 def preprocessing(scenarios):
     scenario = scenarios
@@ -42,19 +44,13 @@ def evaluation(agent, env):
     eval = False
     enemy_action_for_transition = [0] * len(env.enemies_fixed_list)
     friendly_action_for_transition = [0] * len(env.friendlies_fixed_list)
+    k = 0
+
     while not done:
         if env.now % (decision_timestep) <= 0.00001:
+            k += 1
             avail_action_blue, target_distance_blue, air_alert_blue = env.get_avail_actions_temp(side='blue')
             avail_action_yellow, target_distance_yellow, air_alert_yellow = env.get_avail_actions_temp(side='yellow')
-            # edge_index_ssm_to_ship = env.get_ssm_to_ship_edge_index()
-            # edge_index_ssm_to_ssm = env.get_ssm_to_ssm_edge_index()
-            # edge_index_sam_to_ssm = env.get_sam_to_ssm_edge_index()
-            # edge_index_ship_to_sam = env.get_ship_to_sam_edge_index()
-            # edge_index_ship_to_enemy = env.get_ship_to_enemy_edge_index()
-            # heterogeneous_edges = (edge_index_ssm_to_ship, edge_index_ssm_to_ssm, edge_index_sam_to_ssm, edge_index_ship_to_sam, edge_index_ship_to_enemy)
-            # ship_feature = env.get_ship_feature()
-            # missile_node_feature, node_cats = env.get_missile_node_feature()
-            # action_feature = env.get_action_feature()
             actions_blue = list()
             for i in range(len(env.friendlies_fixed_list)):
                 edge_index_ssm_to_ship = env.get_ssm_to_ship_edge_index(k = i)
@@ -67,14 +63,23 @@ def evaluation(agent, env):
                 missile_node_feature, node_cats = env.get_missile_node_feature(k = i)
                 action_feature = env.get_action_feature(k = i)
                 agent.eval_check(eval=True)
-                action_blue, prob, mask, a_index = agent.sample_action(ship_feature, missile_node_feature,
-                                                                       heterogeneous_edges, avail_action_blue[i],
-                                                                       action_feature)
+                if k >=2.0:
+                    td_target = agent.get_td_target(ship_feature, missile_node_feature, heterogeneous_edges, avail_action_blue[i], action_feature, reward = reward, done = done)
+                    # print(graph_embedding)
+                    # print(graph_feature)
+
+                    #if (a_index != 0) or (a_index != 1) or (a_index != 2) or (a_index != 3):
+                    data_memory.append([graph_embedding,graph_feature, td_target])
+
+                action_blue, prob, mask, a_index, graph_embedding, graph_feature = agent.sample_action_visualize(ship_feature, missile_node_feature,heterogeneous_edges, avail_action_blue[i],action_feature, random = False)
                 actions_blue.append(action_blue)
 
 
             action_yellow = agent_yellow.get_action(avail_action_yellow, target_distance_yellow, air_alert_yellow)
             reward, win_tag, done, leakers = env.step(actions_blue, action_yellow)
+
+
+
             episode_reward += reward
         else:
             pass_transition = True
@@ -200,6 +205,38 @@ if __name__ == "__main__":
                           ciws_threshold=ciws_threshold,
                           action_history_step=cfg.action_history_step)
             episode_reward, win_tag = evaluation(agent, env)
+
+            # with open("data.json", "w") as json_file:
+            #     json.dump(data_memory, json_file)
+
+            with open("data.json", "w", encoding='utf-8') as json_file:
+                json.dump(data_memory, json_file, ensure_ascii=False)
+            # import matplotlib.pyplot as plt
+            # from sklearn.manifold import TSNE
+            # X = [item[0] for item in data_memory]
+            # X2 = [item[0] for item in data_memory]
+            # y = [item[1] for item in data_memory]
+            #
+            # # t-SNE를 사용하여 데이터를 2D로 변환
+            # tsne = TSNE(n_components=2, random_state=0)
+            # tsne2 = TSNE(n_components=2, random_state=0)
+            # X_2d = tsne.fit_transform(X)
+            # X_3d = tsne2.fit_transform(X2)
+            #
+            # # 시각화
+            # plt.figure(figsize=(8, 6))
+            # scatter = plt.scatter(X_2d[:, 0], X_2d[:, 1], c=y, cmap='viridis')
+            #
+            #
+            # # 컬러바 추가
+            # cbar = plt.colorbar(scatter)
+            #
+            # plt.xlabel('hi1')
+            # plt.ylabel('hi2')
+            # plt.title('t-SNE visualization')
+            # plt.show()
+            # #
+
             if win_tag != 'lose':
                 non_lose_ratio += 1/cfg.n_test
                 non_lose_records.append(1)
@@ -210,6 +247,8 @@ if __name__ == "__main__":
 
 
             print(e, win_tag, np.mean(non_lose_records))
+
+
 
         non_lose_ratio_list.append(non_lose_ratio)
         df = pd.DataFrame(non_lose_ratio_list)

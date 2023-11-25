@@ -6,6 +6,11 @@ import math
 import pygame
 from collections import deque
 
+sigma_list = []
+dummy_list = [0]
+
+
+
 import sys
 
 sys.path.append("..")  # 상위 폴더를 import할 수 있도록 경로 추가
@@ -142,6 +147,7 @@ class CIWS:
 
 
 class Missile:
+    global counting
     def __init__(self, env, launcher, spec):
         self.id = str(np.round(np.random.uniform(0, 10000), 0)) + "-" + str(np.round(np.random.uniform(0, 5000), 0))
         self.env = env
@@ -689,6 +695,7 @@ class Missile:
                 in_arc_list.append(self.target)
                 if self.target.cla == 'ship':
                     theta = self.get_angle_of_incidence(self.target)
+
                     sigma = self.target.get_sigma(theta)
 
                     R = 10 * math.log10((cal_distance(self, self.target) / 10) * 1.852 * 10 ** 5)  # [km]
@@ -725,10 +732,24 @@ class Missile:
                 if self.target.cla == 'ship':
                     theta = self.get_angle_of_incidence(self.target)
                     sigma = self.target.get_sigma(theta)
+
+                    # import matplotlib.pyplot as plt
+                    # dummy_list[0]+=1
+
+
+
+
                     R = 10 * math.log10((cal_distance(self, self.target) / 10) * 1.852 * 10 ** 5)  # [km]
                     S_N = get_signal_to_noise(self.P, self.G, sigma, self.c, R, self.N)
                     T_N = get_threshold_to_noise(self.env.P_fa)
                     p_d = get_probability_of_detection(S_N, T_N)
+                    # sigma_list.append(p_d)
+                    # if dummy_list[0] % 200 == 0:
+                    #     counts, bins = np.histogram(sigma_list)
+                    #     plt.stairs(counts, bins)
+                    #     plt.hist(bins[:-1], bins, weights=counts)
+                    #     plt.show()
+
                     probabilities.append(p_d)
                 else:
                     sigma = self.target.sigma

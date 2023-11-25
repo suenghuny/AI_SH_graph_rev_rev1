@@ -17,8 +17,6 @@ def visualize_heterogeneous_graph(nodes, edges, edges2):
     def generate_rgb_code(value):
         # 범위를 0과 16 사이로 제한
         value = max(0, min(value, 16))
-
-        # 정규화된 값을 계산
         normalized_value = value / 16.0
 
         # RGB 코드 계산

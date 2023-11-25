@@ -117,7 +117,10 @@ class Environment:
         inception_data = self.data.inception_data
         noise = random.uniform(-10, 10)
         self.missile_speed_list = list()
-        inception_range = cfg.inception_angle
+        if cfg.angle_random == True:
+            inception_range = random.uniform(0, 360)
+        else:
+            inception_range = cfg.inception_angle
         self.random_recording = list()
         for key, value in data.ship_data.items():
             if value['side']=='blue':
