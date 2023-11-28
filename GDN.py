@@ -1150,7 +1150,7 @@ class Agent:
         td_target = discounted_n_step_bootstrapping.sum(dim=1, keepdims = True)
         delta = (td_target - q_tot).detach().tolist()
         self.buffer.update_transition_priority(batch_index = batch_index, delta = delta)
-        print(q_tot)
+
         loss = F.huber_loss(weight * q_tot, weight * td_target)
         #print("전",  torch.cuda.memory_reserved()/1e-9)
         del node_features_missile, \

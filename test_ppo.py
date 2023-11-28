@@ -126,8 +126,7 @@ if __name__ == "__main__":
     detection_by_height = False  # 고도에 의한
     mode = 'excel'  # 전처리 모듈 / 'excel' : input_data.xlsx 파일 적용, 'txt' "Data\ship.txt", "Data\patrol_aircraft.txt", "Data\SAM.txt", "Data\SSM.txt"를 적용
     rule = 'rule2'  # rule1 : 랜덤 정책 / rule2 : 거리를 기반 합리성에 기반한 정책(softmax policy)
-    temperature = [10,
-                   20]  # rule = 'rule2'인 경우만 적용 / 의사결정의 flexibility / 첫번째 index : 공중 위험이 낮은 상태, 두번째 index : 공중 위험이 높은 상태
+    temperature = [10, 20]  # rule = 'rule2'인 경우만 적용 / 의사결정의 flexibility / 첫번째 index : 공중 위험이 낮은 상태, 두번째 index : 공중 위험이 높은 상태
     ciws_threshold = 1
     polar_chart_visualize = False
     scenarios = ['scenario1', 'scenario2', 'scenario3']
@@ -144,7 +143,6 @@ if __name__ == "__main__":
     non_lose_ratio_list = []
     raw_data = list()
     for dataset in datasets:
-
         print("====dataset{}====".format(dataset))
         fitness_history = []
         data = preprocessing(dataset)
@@ -179,7 +177,7 @@ if __name__ == "__main__":
                      K_epoch = cfg.K_epoch,
                      layers=list(eval(cfg.ppo_layers))
                      )
-        load_file = "episode2800"
+        load_file = "episode2800_rev"
         agent.load_network(load_file+'.pt') # 2900, 1600
         reward_list = list()
 
@@ -213,7 +211,7 @@ if __name__ == "__main__":
 
         non_lose_ratio_list.append(non_lose_ratio)
         df = pd.DataFrame(non_lose_ratio_list)
-        df.to_csv("ppo_result_{}_angle_{}.csv".format(load_file, cfg.inception_angle))
+        df.to_csv("rev_ppo_result_{}_angle_{}.csv".format(load_file, cfg.inception_angle))
         df_raw = pd.DataFrame(raw_data)
-        df_raw.to_csv("raw_data_ppo_angle_{}.csv".format(cfg.inception_angle))
+        df_raw.to_csv("rev_raw_data_ppo_angle_{}.csv".format(cfg.inception_angle))
 

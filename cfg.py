@@ -54,9 +54,6 @@ def get_cfg():
     parser.add_argument("--interval_min_blue", type=bool, default=True, help="interval_min_blue")
     parser.add_argument("--interval_constant_blue", type=float, default=1, help="interval_constant_blue")
     parser.add_argument("--action_history_step", type=int, default=4, help="action_history_step")
-
-
-
     parser.add_argument("--grad_clip", type=float, default=0.5, help="gradient clipping")
     parser.add_argument("--grad_clip_step", type=int, default=450, help="gradient clipping step")
     parser.add_argument("--grad_clip_reduce", type=float, default=0.1, help="reduced_gradient clipping")
@@ -89,7 +86,7 @@ def get_cfg():
     parser.add_argument("--loss_weight", type=float, default=0.5, help="loss_weight_value")
 
     parser.add_argument("--inception_angle", type=float, default=22.5, help="loss_weight_value")
-    parser.add_argument("--angle_random", type=bool, default=True, help="loss_weight_value")
+    parser.add_argument("--angle_random", type=bool, default=False, help="loss_weight_value")
 
 
     return parser.parse_args()
